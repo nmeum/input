@@ -1,0 +1,22 @@
+IndentWidth: 8
+UseTab: ForIndentation
+
+AlignOperands: true
+AlignAfterOpenBracket: Align
+AlignEscapedNewlines: DontAlign
+IndentCaseLabels: false
+
+BreakBeforeBraces: WebKit
+AlwaysBreakAfterReturnType: TopLevelDefinitions
+
+AllowShortIfStatementsOnASingleLine: false
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: None
+AllowShortLoopsOnASingleLine: false
+
+DerivePointerAlignment: false
+PointerAlignment: Right
+
+PenaltyBreakAssignment: 9999
+PenaltyBreakBeforeFirstCallParameter: 9999
