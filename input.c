@@ -71,7 +71,7 @@ comp(const char *buf, linenoiseCompletions *lc)
 	if (ferror(pipe))
 		errx(EXIT_FAILURE, "ferror failed");
 
-	if (pclose(pipe))
+	if (pclose(pipe) == -1)
 		errx(EXIT_FAILURE, "pclose failed");
 	free(cmd);
 }
