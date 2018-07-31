@@ -7,6 +7,7 @@
 .Sh SYNOPSIS
 .Nm input
 .Op Fl t
+.Op Fl c Ar completions
 .Op Fl p Ar prompt
 .Op Fl h Ar file
 .Op Fl s Ar size
@@ -34,6 +35,12 @@ The options are as follows:
 Force reading from
 .Xr tty 4
 instead of standard input.
+.It Fl c Ar completions
+Read completions from the file
+.Ar completions .
+The file should contain one completion per line.
+It is currently filtered using
+.Xr grep 1 .
 .It Fl p Ar prompt
 Change the default prompt string
 .Qq "> "

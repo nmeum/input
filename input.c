@@ -8,20 +8,24 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
 
-enum { DEFHSIZ = 256 };
+#define DEFHSIZ 256
+#define MAXCOMPLEN 512
 
 static char *histfp;
+static char *compfp;
 
 static void
 usage(char *prog)
 {
-	fprintf(stderr,
-	        "USAGE: %s [-t] [-p PROMPT] [-h HISTORY] [-s HISTSIZE]\n",
-	        basename(prog));
+	char *usage = "USAGE: %s [-t] [-c COMPLETION] [-p PROMPT] "
+		"[-h HISTORY] [-s HISTSIZE]\n";
+
+	fprintf(stderr, usage, basename(prog));
 	exit(EXIT_FAILURE);
 }
 
@@ -37,6 +41,39 @@ sighandler(int num)
 {
 	(void)num;
 	savehist();
+}
+
+static void
+comp(const char *buf, linenoiseCompletions *lc)
+{
+	FILE *pipe;
+	size_t clen;
+	char *cmd, *p;
+	static char line[LINE_MAX + 1];
+
+	if (strchr(buf, '\'')) return; /* TODO */
+
+	clen = 1 + strlen("grep '^' ''") + strlen(buf) + strlen(compfp);
+	if (!(cmd = malloc(clen)))
+		err(EXIT_FAILURE, "malloc failed");
+	if (snprintf(cmd, clen, "grep '^%s' '%s'", buf, compfp) < 0)
+		err(EXIT_FAILURE, "snprintf failed");
+
+	pipe = popen(cmd, "r");
+	if (!pipe)
+		err(EXIT_FAILURE, "popen failed");
+
+	while (fgets(line, sizeof(line), pipe)) {
+		if ((p = strchr(line, '\n')))
+			*p = '\0';
+		linenoiseAddCompletion(lc, line);
+	}
+	if (ferror(pipe))
+		errx(EXIT_FAILURE, "ferror failed");
+
+	if (pclose(pipe))
+		errx(EXIT_FAILURE, "pclose failed");
+	free(cmd);
 }
 
 static void
@@ -61,8 +98,11 @@ main(int argc, char **argv)
 	ftty = hsiz = 0;
 	prompt = "> ";
 
-	while ((opt = getopt(argc, argv, "p:h:s:t")) != -1) {
+	while ((opt = getopt(argc, argv, "c:p:h:s:t")) != -1) {
 		switch (opt) {
+		case 'c':
+			compfp = optarg;
+			break;
 		case 'p':
 			prompt = optarg;
 			break;
@@ -99,8 +139,10 @@ main(int argc, char **argv)
 			err(EXIT_FAILURE, "sigaction failed");
 	}
 
+	if (compfp)
+		linenoiseSetCompletionCallback(comp);
 	iloop(prompt);
-	savehist();
 
+	savehist();
 	return EXIT_SUCCESS;
 }
