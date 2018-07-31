@@ -6,7 +6,6 @@
 .Nd interactively prompt for user input
 .Sh SYNOPSIS
 .Nm input
-.Op Fl t
 .Op Fl c Ar completions
 .Op Fl p Ar prompt
 .Op Fl h Ar file
@@ -32,10 +31,6 @@ Meaning it reads only a single line from standard input.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl t
-Force reading from
-.Xr tty 4
-instead of standard input.
 .It Fl c Ar completions
 Read completions from the file
 .Ar completions .

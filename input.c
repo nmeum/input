@@ -22,7 +22,7 @@ static char *compfp;
 static void
 usage(char *prog)
 {
-	char *usage = "USAGE: %s [-t] [-c COMPLETION] [-p PROMPT] "
+	char *usage = "USAGE: %s [-c COMPLETION] [-p PROMPT] "
 	              "[-h HISTORY] [-s HISTSIZE]\n";
 
 	fprintf(stderr, usage, basename(prog));
@@ -92,14 +92,14 @@ iloop(char *prompt)
 int
 main(int argc, char **argv)
 {
-	int opt, hsiz, ftty;
+	int opt, hsiz;
 	struct sigaction act;
 	char *prompt;
 
-	ftty = hsiz = 0;
+	hsiz = 0;
 	prompt = "> ";
 
-	while ((opt = getopt(argc, argv, "c:p:h:s:t")) != -1) {
+	while ((opt = getopt(argc, argv, "c:p:h:s:")) != -1) {
 		switch (opt) {
 		case 'c':
 			compfp = optarg;
@@ -114,18 +114,9 @@ main(int argc, char **argv)
 			if (!(hsiz = (int)strtol(optarg, (char **)NULL, 10)))
 				err(EXIT_FAILURE, "strtol failed");
 			break;
-		case 't':
-			ftty = 1;
-			break;
 		default:
 			usage(*argv);
 		}
-	}
-
-	if (ftty || !isatty(STDIN_FILENO)) {
-		close(STDIN_FILENO);
-		if (open("/dev/tty", O_RDWR) == -1)
-			err(EXIT_FAILURE, "open failed");
 	}
 
 	if (histfp) {
