@@ -19,7 +19,8 @@ static char *histfp;
 static void
 usage(char *prog)
 {
-	fprintf(stderr, "USAGE: %s [-p PROMPT] [-h HISTORY] [-s HISTSIZE]\n",
+	fprintf(stderr,
+	        "USAGE: %s [-t] [-p PROMPT] [-h HISTORY] [-s HISTSIZE]\n",
 	        basename(prog));
 	exit(EXIT_FAILURE);
 }
@@ -53,14 +54,14 @@ iloop(char *prompt)
 int
 main(int argc, char **argv)
 {
-	int opt, hsiz;
+	int opt, hsiz, ftty;
 	struct sigaction act;
 	char *prompt;
 
-	hsiz = 0;
+	ftty = hsiz = 0;
 	prompt = "> ";
 
-	while ((opt = getopt(argc, argv, "p:h:s:")) != -1) {
+	while ((opt = getopt(argc, argv, "p:h:s:t")) != -1) {
 		switch (opt) {
 		case 'p':
 			prompt = optarg;
@@ -72,12 +73,15 @@ main(int argc, char **argv)
 			if (!(hsiz = (int)strtol(optarg, (char **)NULL, 10)))
 				err(EXIT_FAILURE, "strtol failed");
 			break;
+		case 't':
+			ftty = 1;
+			break;
 		default:
 			usage(*argv);
 		}
 	}
 
-	if (!isatty(STDIN_FILENO)) {
+	if (ftty && !isatty(STDIN_FILENO)) {
 		close(STDIN_FILENO);
 		if (open("/dev/tty", O_RDWR) == -1)
 			err(EXIT_FAILURE, "open failed");
