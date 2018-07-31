@@ -54,12 +54,10 @@ By default no editing history is kept.
 Specify the maximum editing history size, by default 256 entries are kept.
 .El
 .Sh EXAMPLES
-To continuously transform the input entered by the user
-.Nm
-might be used as follows in a shell script:
+To write all input entered by the user to a file using a shell script:
 .Bd -literal -offset indent
 	input | while read line; do
-		# transform input
+		echo "${input}" >> somefile.txt
 	done
 .Ed
 .Sh SEE ALSO
