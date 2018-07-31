@@ -2,13 +2,13 @@
 #include <err.h>
 #include <fcntl.h>
 #include <libgen.h>
+#include <limits.h>
 #include <linenoise.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <limits.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -23,7 +23,7 @@ static void
 usage(char *prog)
 {
 	char *usage = "USAGE: %s [-t] [-c COMPLETION] [-p PROMPT] "
-		"[-h HISTORY] [-s HISTSIZE]\n";
+	              "[-h HISTORY] [-s HISTSIZE]\n";
 
 	fprintf(stderr, usage, basename(prog));
 	exit(EXIT_FAILURE);
@@ -51,7 +51,8 @@ comp(const char *buf, linenoiseCompletions *lc)
 	char *cmd, *p;
 	static char line[LINE_MAX + 1];
 
-	if (strchr(buf, '\'')) return; /* TODO */
+	if (strchr(buf, '\''))
+		return; /* TODO */
 
 	clen = 1 + strlen("grep '^' ''") + strlen(buf) + strlen(compfp);
 	if (!(cmd = malloc(clen)))
