@@ -122,7 +122,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (ftty && !isatty(STDIN_FILENO)) {
+	if (ftty || !isatty(STDIN_FILENO)) {
 		close(STDIN_FILENO);
 		if (open("/dev/tty", O_RDWR) == -1)
 			err(EXIT_FAILURE, "open failed");
