@@ -17,8 +17,9 @@ The
 utility interactively prompts for input lines.
 In demarcation to
 .Xr read 1
-it provides readline-like line editing and an optional persistent
-history.
+it provides
+.Xr readline 3
+like line editing and an optional persistent history.
 Besides it continuously prompts for input instead of waiting for a
 single input line.
 .Pp
@@ -61,7 +62,8 @@ To write all input entered by the user to a file using a shell script:
 	done
 .Ed
 .Sh SEE ALSO
-.Xr rlwrap 1
+.Xr rlwrap 1 ,
+.Xr readline 3
 .Sh AUTHORS
 .An Sören Tempel Aq Mt soeren@soeren-tempel.net
 .Sh BUGS
