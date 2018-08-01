@@ -25,10 +25,10 @@ static char fntemp[] = "/tmp/inputXXXXXX";
 static void
 usage(char *prog)
 {
-	char *usage = "USAGE: %s [-c COMPLETION] [-p PROMPT] "
-	              "[-h HISTORY] [-s HISTSIZE]\n";
+	char *usage = "[-c COMPLETION] [-p PROMPT] "
+	              "[-h HISTORY] [-s HISTSIZE]";
 
-	fprintf(stderr, usage, basename(prog));
+	fprintf(stderr, "USAGE: %s %s\n", basename(prog), usage);
 	exit(EXIT_FAILURE);
 }
 
