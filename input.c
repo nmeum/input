@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <libgen.h>
 #include <limits.h>
@@ -14,10 +15,12 @@
 #include <sys/types.h>
 
 #define DEFHSIZ 256
-#define MAXCOMPLEN 512
 
 static char *histfp;
 static char *compfp;
+
+static int fdtemp = -1;
+static char fntemp[] = "/tmp/inputXXXXXX";
 
 static void
 usage(char *prog)
@@ -40,28 +43,44 @@ static void
 sighandler(int num)
 {
 	(void)num;
+
+	if (fdtemp > 0)
+		remove(fntemp);
 	savehist();
+}
+
+static char *
+safegrep(const char *pattern)
+{
+	char *cmd;
+	size_t len;
+
+	/* TODO: grep -F */
+
+	if (ftruncate(fdtemp, 0) == -1)
+		err(EXIT_FAILURE, "ftruncate failed");
+	if (write(fdtemp, pattern, strlen(pattern)) == -1 ||
+	    write(fdtemp, "\n", 1) == -1)
+		err(EXIT_FAILURE, "write failed");
+
+	len = 1 + strlen("grep -f '' ''") + strlen(fntemp) + strlen(compfp);
+	if (!(cmd = malloc(len)))
+		err(EXIT_FAILURE, "malloc failed");
+	if (snprintf(cmd, len, "grep -f '%s' '%s'", fntemp, compfp) < 0)
+		err(EXIT_FAILURE, "snprintf failed");
+
+	return cmd;
 }
 
 static void
 comp(const char *buf, linenoiseCompletions *lc)
 {
+	char *p, *cmd;
 	FILE *pipe;
-	size_t clen;
-	char *cmd, *p;
 	static char line[LINE_MAX + 1];
 
-	if (strchr(buf, '\''))
-		return; /* TODO */
-
-	clen = 1 + strlen("grep '^' ''") + strlen(buf) + strlen(compfp);
-	if (!(cmd = malloc(clen)))
-		err(EXIT_FAILURE, "malloc failed");
-	if (snprintf(cmd, clen, "grep '^%s' '%s'", buf, compfp) < 0)
-		err(EXIT_FAILURE, "snprintf failed");
-
-	pipe = popen(cmd, "r");
-	if (!pipe)
+	cmd = safegrep(buf);
+	if (!(pipe = popen(cmd, "r")))
 		err(EXIT_FAILURE, "popen failed");
 
 	while (fgets(line, sizeof(line), pipe)) {
@@ -131,10 +150,20 @@ main(int argc, char **argv)
 			err(EXIT_FAILURE, "sigaction failed");
 	}
 
-	if (compfp)
+	if (compfp) {
+		if (!(fdtemp = mkstemp(fntemp)))
+			err(EXIT_FAILURE, "mkstemp failed");
 		linenoiseSetCompletionCallback(comp);
-	iloop(prompt);
+	}
 
+	iloop(prompt);
 	savehist();
+
+	/* TODO: always save hist and remove fntemp on exit. */
+	if (fdtemp > 0) {
+		close(fdtemp);
+		remove(fntemp);
+	}
+
 	return EXIT_SUCCESS;
 }
