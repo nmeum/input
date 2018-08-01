@@ -58,18 +58,16 @@ safegrep(const char *pattern)
 	char *cmd;
 	size_t len;
 
-	/* TODO: grep -F */
-
 	if (ftruncate(fdtemp, 0) == -1)
 		err(EXIT_FAILURE, "ftruncate failed");
 	if (write(fdtemp, pattern, strlen(pattern)) == -1 ||
 	    write(fdtemp, "\n", 1) == -1)
 		err(EXIT_FAILURE, "write failed");
 
-	len = 1 + strlen("grep -f '' ''") + strlen(fntemp) + strlen(compfp);
+	len = 1 + strlen("grep -F -f '' ''") + strlen(fntemp) + strlen(compfp);
 	if (!(cmd = malloc(len)))
 		err(EXIT_FAILURE, "malloc failed");
-	if (snprintf(cmd, len, "grep -f '%s' '%s'", fntemp, compfp) < 0)
+	if (snprintf(cmd, len, "grep -F -f '%s' '%s'", fntemp, compfp) < 0)
 		err(EXIT_FAILURE, "snprintf failed");
 
 	return cmd;
@@ -78,15 +76,19 @@ safegrep(const char *pattern)
 static void
 comp(const char *buf, linenoiseCompletions *lc)
 {
-	char *p, *cmd;
 	FILE *pipe;
+	size_t buflen;
+	char *p, *cmd;
 	static char line[LINE_MAX + 1];
 
 	cmd = safegrep(buf);
 	if (!(pipe = popen(cmd, "r")))
 		err(EXIT_FAILURE, "popen failed");
 
+	buflen = strlen(buf);
 	while (fgets(line, sizeof(line), pipe)) {
+		if (strncmp(buf, line, buflen))
+			continue;
 		if ((p = strchr(line, '\n')))
 			*p = '\0';
 		linenoiseAddCompletion(lc, line);
