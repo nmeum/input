@@ -33,20 +33,23 @@ usage(char *prog)
 }
 
 static void
-savehist(void)
+cleanup(void)
 {
 	if (histfp && linenoiseHistorySave(histfp) == -1)
-		err(EXIT_FAILURE, "couldn't save history to '%s'", histfp);
+		warnx("couldn't save history to '%s'", histfp);
+
+	if (fdtemp > 0) {
+		close(fdtemp);
+		if (remove(fntemp) == -1)
+			warn("couldn't remove file '%s'", fntemp);
+	}
 }
 
 static void
 sighandler(int num)
 {
 	(void)num;
-
-	if (fdtemp > 0)
-		remove(fntemp);
-	savehist();
+	cleanup();
 }
 
 static char *
@@ -138,6 +141,9 @@ main(int argc, char **argv)
 		}
 	}
 
+	if (atexit(cleanup))
+		err(EXIT_FAILURE, "atexit failed");
+
 	if (histfp) {
 		if (linenoiseHistoryLoad(histfp) == -1)
 			err(EXIT_FAILURE, "couldn't load '%s'", histfp);
@@ -157,13 +163,5 @@ main(int argc, char **argv)
 	}
 
 	iloop(prompt);
-	savehist();
-
-	/* TODO: always save hist and remove fntemp on exit. */
-	if (fdtemp > 0) {
-		close(fdtemp);
-		remove(fntemp);
-	}
-
 	return EXIT_SUCCESS;
 }
