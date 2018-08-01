@@ -22,13 +22,6 @@ like line editing and an optional persistent history.
 Besides it continuously prompts for input instead of waiting for a
 single input line.
 .Pp
-If standard input is not a
-.Xr tty 4
-.Nm
-behaves like
-.Xr read 1 .
-Meaning it reads only a single line from standard input.
-.Pp
 The options are as follows:
 .Bl -tag -width Ds
 .It Fl c Ar completions
@@ -52,10 +45,17 @@ Specify the maximum editing history size, by default 256 entries are kept.
 .Sh EXAMPLES
 To write all input entered by the user to a file using a shell script:
 .Bd -literal -offset indent
-	input | while read line; do
-		echo "${input}" >> somefile.txt
-	done
+input | while read line; do
+  echo "${input}" >> somefile.txt
+done
 .Ed
+.Pp
+Provide
+.Xr readline 3
+like input for
+.Xr nc 1 :
+.Pp
+.Dl input | nc localhost 2342
 .Sh SEE ALSO
 .Xr rlwrap 1 ,
 .Xr readline 3
