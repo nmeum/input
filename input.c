@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#define GREPCMD "grep -F -f "
 #define DEFHSIZ 256
 
 static char *histfp;
@@ -21,6 +22,9 @@ static char *compfp;
 
 static int fdtemp = -1;
 static char fntemp[] = "/tmp/inputXXXXXX";
+
+static char *cmdbuf;
+size_t cmdlen;
 
 static void
 usage(char *prog)
@@ -55,8 +59,7 @@ sighandler(int num)
 static char *
 safegrep(const char *pattern)
 {
-	char *cmd;
-	size_t len;
+	int ret;
 
 	if (ftruncate(fdtemp, 0) == -1)
 		err(EXIT_FAILURE, "ftruncate failed");
@@ -64,13 +67,13 @@ safegrep(const char *pattern)
 	    write(fdtemp, "\n", 1) == -1)
 		err(EXIT_FAILURE, "write failed");
 
-	len = 1 + strlen("grep -F -f '' ''") + strlen(fntemp) + strlen(compfp);
-	if (!(cmd = malloc(len)))
-		err(EXIT_FAILURE, "malloc failed");
-	if (snprintf(cmd, len, "grep -F -f '%s' '%s'", fntemp, compfp) < 0)
+	ret = snprintf(cmdbuf, cmdlen, GREPCMD "%s %s", fntemp, compfp);
+	if (ret < 0)
 		err(EXIT_FAILURE, "snprintf failed");
+	else if (ret >= (int)cmdlen)
+		errx(EXIT_FAILURE, "buffer for snprintf is too short");
 
-	return cmd;
+	return cmdbuf;
 }
 
 static void
@@ -98,7 +101,6 @@ comp(const char *buf, linenoiseCompletions *lc)
 
 	if (pclose(pipe) == -1)
 		errx(EXIT_FAILURE, "pclose failed");
-	free(cmd);
 }
 
 static void
@@ -163,6 +165,14 @@ main(int argc, char **argv)
 	if (compfp) {
 		if (!(fdtemp = mkstemp(fntemp)))
 			err(EXIT_FAILURE, "mkstemp failed");
+
+		/* + 2 in order to alloc memory for the null byte and the
+		 * space seperating the grep command-line arguments. */
+		cmdlen = 2 + strlen(GREPCMD) + strlen(fntemp) + strlen(compfp);
+		if (!(cmdbuf = malloc(cmdlen)))
+			err(EXIT_FAILURE, "malloc failed");
+		assert(cmdlen <= INT_MAX); /* snprintf(3) returns an int */
+
 		linenoiseSetCompletionCallback(comp);
 	}
 
