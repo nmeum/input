@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -162,12 +161,11 @@ main(int argc, char **argv)
 		cmdlen = 2 + strlen(GREPCMD) + strlen(fntemp) + strlen(compfp);
 		if (!(cmdbuf = malloc(cmdlen)))
 			err(EXIT_FAILURE, "malloc failed");
-		assert(cmdlen <= INT_MAX); /* snprintf(3) returns an int */
 
 		ret = snprintf(cmdbuf, cmdlen, GREPCMD "%s %s", fntemp, compfp);
 		if (ret < 0)
 			err(EXIT_FAILURE, "snprintf failed");
-		else if (ret >= (int)cmdlen)
+		else if ((size_t)ret >= cmdlen)
 			errx(EXIT_FAILURE, "buffer for snprintf is too short");
 
 		linenoiseSetCompletionCallback(comp);
