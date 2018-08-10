@@ -19,12 +19,10 @@
 
 static char *histfp;
 static char *compfp;
+static char *cmdbuf;
 
 static int fdtemp = -1;
 static char fntemp[] = "/tmp/inputXXXXXX";
-
-static char *cmdbuf;
-size_t cmdlen;
 
 static void
 usage(char *prog)
@@ -59,19 +57,11 @@ sighandler(int num)
 static char *
 safegrep(const char *pattern)
 {
-	int ret;
-
 	if (ftruncate(fdtemp, 0) == -1)
 		err(EXIT_FAILURE, "ftruncate failed");
 	if (write(fdtemp, pattern, strlen(pattern)) == -1 ||
 	    write(fdtemp, "\n", 1) == -1)
 		err(EXIT_FAILURE, "write failed");
-
-	ret = snprintf(cmdbuf, cmdlen, GREPCMD "%s %s", fntemp, compfp);
-	if (ret < 0)
-		err(EXIT_FAILURE, "snprintf failed");
-	else if (ret >= (int)cmdlen)
-		errx(EXIT_FAILURE, "buffer for snprintf is too short");
 
 	return cmdbuf;
 }
@@ -120,7 +110,8 @@ iloop(char *prompt)
 int
 main(int argc, char **argv)
 {
-	int opt, hsiz;
+	size_t cmdlen;
+	int ret, opt, hsiz;
 	struct sigaction act;
 	char *prompt;
 
@@ -172,6 +163,12 @@ main(int argc, char **argv)
 		if (!(cmdbuf = malloc(cmdlen)))
 			err(EXIT_FAILURE, "malloc failed");
 		assert(cmdlen <= INT_MAX); /* snprintf(3) returns an int */
+
+		ret = snprintf(cmdbuf, cmdlen, GREPCMD "%s %s", fntemp, compfp);
+		if (ret < 0)
+			err(EXIT_FAILURE, "snprintf failed");
+		else if (ret >= (int)cmdlen)
+			errx(EXIT_FAILURE, "buffer for snprintf is too short");
 
 		linenoiseSetCompletionCallback(comp);
 	}
