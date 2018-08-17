@@ -98,10 +98,10 @@ iloop(char *prompt)
 	char *line;
 
 	while ((line = linenoise(prompt)) != NULL) {
-		if (*line != '\0') {
-			puts(line);
-			fflush(stdout);
-		}
+		/* We output empty lines intentionally. */
+		puts(line);
+		fflush(stdout);
+
 		free(line);
 	}
 }
