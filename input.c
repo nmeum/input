@@ -17,7 +17,6 @@
 #define DEFHSIZ 256
 
 static char *histfp;
-static char *compfp;
 static char *cmdbuf;
 
 static int fdtemp = -1;
@@ -112,7 +111,7 @@ main(int argc, char **argv)
 	size_t cmdlen;
 	int ret, opt, hsiz;
 	struct sigaction act;
-	char *prompt;
+	char *prompt, *compfp;
 
 	hsiz = 0;
 	prompt = "> ";
