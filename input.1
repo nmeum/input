@@ -6,7 +6,7 @@
 .Nd interactively prompt for user input
 .Sh SYNOPSIS
 .Nm input
-.Op Fl c Pa completions
+.Op Fl c Ar command
 .Op Fl p Ar prompt
 .Op Fl h Pa file
 .Op Fl s Ar size
@@ -24,12 +24,12 @@ single input line.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl c Pa completions
-Read completions from the file
-.Pa completions .
-The file should contain one completion per line.
-It is currently filtered using
-.Xr grep 1 .
+.It Fl c Ar command
+Invoke
+.Ar command
+to retrieve a list of available completion items.
+This command is invoked each time the user presses the tab character.
+Items must be written to standard out and separated by a newline character.
 .It Fl p Ar prompt
 Change the default prompt string
 .Qq "> "

@@ -25,7 +25,7 @@ static char fntemp[] = "/tmp/inputXXXXXX";
 static void
 usage(char *prog)
 {
-	char *usage = "[-c COMPLETION] [-p PROMPT] "
+	char *usage = "[-c COMMAND] [-p PROMPT] "
 	              "[-h HISTORY] [-s HISTSIZE]";
 
 	fprintf(stderr, "USAGE: %s %s\n", basename(prog), usage);
@@ -111,15 +111,16 @@ main(int argc, char **argv)
 	size_t cmdlen;
 	int ret, opt, hsiz;
 	struct sigaction act;
-	char *prompt, *compfp;
+	char *prompt, *compcmd;
 
 	hsiz = 0;
 	prompt = "> ";
+	compcmd = NULL;
 
 	while ((opt = getopt(argc, argv, "c:p:h:s:")) != -1) {
 		switch (opt) {
 		case 'c':
-			compfp = optarg;
+			compcmd = optarg;
 			break;
 		case 'p':
 			prompt = optarg;
@@ -151,17 +152,16 @@ main(int argc, char **argv)
 			err(EXIT_FAILURE, "sigaction failed");
 	}
 
-	if (compfp) {
+	if (compcmd) {
 		if (!(fdtemp = mkstemp(fntemp)))
 			err(EXIT_FAILURE, "mkstemp failed");
 
-		/* + 2 in order to alloc memory for the null byte and the
-		 * space seperating the grep command-line arguments. */
-		cmdlen = 2 + strlen(GREPCMD) + strlen(fntemp) + strlen(compfp);
+		/* + 2 for the null byte and the pipe character. */
+		cmdlen = 2 + strlen(GREPCMD) + strlen(fntemp) + strlen(compcmd);
 		if (!(cmdbuf = malloc(cmdlen)))
 			err(EXIT_FAILURE, "malloc failed");
 
-		ret = snprintf(cmdbuf, cmdlen, GREPCMD "%s %s", fntemp, compfp);
+		ret = snprintf(cmdbuf, cmdlen, "%s" "|" GREPCMD "%s", compcmd, fntemp);
 		if (ret < 0)
 			err(EXIT_FAILURE, "snprintf failed");
 		else if ((size_t)ret >= cmdlen)
