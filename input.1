@@ -6,9 +6,9 @@
 .Nd interactively prompt for user input
 .Sh SYNOPSIS
 .Nm input
-.Op Fl c Ar completions
+.Op Fl c Pa completions
 .Op Fl p Ar prompt
-.Op Fl h Ar file
+.Op Fl h Pa file
 .Op Fl s Ar size
 .Sh DESCRIPTION
 The
@@ -24,9 +24,9 @@ single input line.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl c Ar completions
+.It Fl c Pa completions
 Read completions from the file
-.Ar completions .
+.Pa completions .
 The file should contain one completion per line.
 It is currently filtered using
 .Xr grep 1 .
@@ -35,9 +35,9 @@ Change the default prompt string
 .Qq "> "
 to
 .Ar prompt .
-.It Fl h Ar file
+.It Fl h Pa file
 Store the editing history in
-.Ar file .
+.Pa file .
 By default no editing history is kept.
 .It Fl s Ar size
 Specify the maximum editing history size, by default 256 entries are kept.
