@@ -161,7 +161,7 @@ main(int argc, char **argv)
 		if (!(cmdbuf = malloc(cmdlen)))
 			err(EXIT_FAILURE, "malloc failed");
 
-		ret = snprintf(cmdbuf, cmdlen, "%s" "|" GREPCMD "%s", compcmd, fntemp);
+		ret = snprintf(cmdbuf, cmdlen, "%s|" GREPCMD "%s", compcmd, fntemp);
 		if (ret < 0)
 			err(EXIT_FAILURE, "snprintf failed");
 		else if ((size_t)ret >= cmdlen)
