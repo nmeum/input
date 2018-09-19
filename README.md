@@ -23,7 +23,7 @@ use cases.
 
 * Support for readline-like key bindings using [linenoise][linenoise fork repo].
 * Support for tab completions using arbitrary shell commands.
-* Support for an editing history.
+* Support for a persistent editing history.
 
 ## Installation
 
