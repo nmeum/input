@@ -155,6 +155,8 @@ main(int argc, char **argv)
 	if (compcmd) {
 		if (!(fdtemp = mkstemp(fntemp)))
 			err(EXIT_FAILURE, "mkstemp failed");
+		if (fchmod(fdtemp, 0600) == -1) /* not manadated by POSIX */
+			err(EXIT_FAILURE, "fchmod failed");
 
 		/* + 2 for the null byte and the pipe character. */
 		cmdlen = 2 + strlen(GREPCMD) + strlen(fntemp) + strlen(compcmd);
