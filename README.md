@@ -16,7 +16,7 @@ since it seemed easier to use at the time.
 Just as rlwrap this program can be used to provide readline-like key
 bindings for programs not linked against readline, e.g. `nc(1)`.
 Additionally, it can also be used as an "alternative" to `read(1)` in
-shell scripts. The provided man page documents usage examples for both
+shell scripts. The provided man page contains usage examples for both
 use cases.
 
 ## Features
