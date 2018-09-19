@@ -31,8 +31,8 @@ The linenoise code is included in the `vendor/` subdirectory as a
 git submodule since the fork is unlikely to be packaged by
 distributions. Additionally, the following software is required:
 
-	* A C99 compiler
-	* [GNU make][GNU make] (sorry!)
+* A C99 compiler
+* [GNU make][GNU make] (sorry!)
 
 In order to install the program the submodule needs to be initialized
 and cloned. Afterwards, the program can be installed using:
