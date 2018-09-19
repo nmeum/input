@@ -11,6 +11,12 @@ scratch by myself. Contrary to rlwrap I used a [linenoise][linenoise
 repo] [fork][linenoise fork repo] instead of [readline][GNU readline]
 since it seemed easier to use at the time.
 
+## Features
+
+* Support for readline-like key bindings using [linenoise][linenoise fork repo].
+* Support for tab completions using arbitrary shell commands.
+* Support for a persistent editing history.
+
 ## Usage
 
 Just as rlwrap this program can be used to provide readline-like key
@@ -18,12 +24,6 @@ bindings for programs not linked against readline, e.g. `nc(1)`.
 Additionally, it can also be used as an "alternative" to `read(1)` in
 shell scripts. The provided man page contains usage examples for both
 use cases.
-
-## Features
-
-* Support for readline-like key bindings using [linenoise][linenoise fork repo].
-* Support for tab completions using arbitrary shell commands.
-* Support for a persistent editing history.
 
 ## Installation
 
