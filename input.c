@@ -3,7 +3,6 @@
 #include <fcntl.h>
 #include <libgen.h>
 #include <limits.h>
-#include <linenoise.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,6 +11,9 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#include "linenoise.h"
+#include "utf8.h"
 
 #define GREPCMD "grep -F -f "
 #define DEFHSIZ 256
@@ -171,6 +173,11 @@ main(int argc, char **argv)
 
 		linenoiseSetCompletionCallback(comp);
 	}
+
+	linenoiseSetEncodingFunctions(
+	    linenoiseUtf8PrevCharLen,
+	    linenoiseUtf8NextCharLen,
+	    linenoiseUtf8ReadCode);
 
 	iloop(prompt);
 	return EXIT_SUCCESS;

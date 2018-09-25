@@ -17,9 +17,11 @@ input: $(NAME).o liblinenoise.a
 format: .clang-format $(NAME).c
 	clang-format -style=file -i $(NAME).c
 
+utf8.o: utf8.c utf8.h
+	$(CC) -c $< -o $@ $(CFLAGS) -w
 linenoise.o: linenoise.c linenoise.h
 	$(CC) -c $< -o $@ $(CFLAGS) -w
-liblinenoise.a: linenoise.o
+liblinenoise.a: utf8.o linenoise.o
 	$(AR) rcs $@ $^
 
 install: $(NAME) $(NAME).1 README.md

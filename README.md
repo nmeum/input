@@ -16,6 +16,7 @@ since it seemed easier to use at the time.
 * Support for readline-like key bindings using [linenoise][linenoise fork repo].
 * Support for tab completions using arbitrary shell commands.
 * Support for a persistent editing history.
+* Support for UTF-8.
 
 ## Usage
 
