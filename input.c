@@ -107,12 +107,27 @@ iloop(char *prompt)
 	}
 }
 
+static void
+confhist(char *fp, int size)
+{
+	struct sigaction act;
+
+	if (linenoiseHistoryLoad(fp) == -1)
+		err(EXIT_FAILURE, "couldn't load '%s'", fp);
+	if (!linenoiseHistorySetMaxLen(size ? size : DEFHSIZ))
+		err(EXIT_FAILURE, "couldn't set history size");
+
+	memset(&act, '\0', sizeof(act));
+	act.sa_handler = sighandler;
+	if (sigaction(SIGINT, &act, NULL))
+		err(EXIT_FAILURE, "sigaction failed");
+}
+
 int
 main(int argc, char **argv)
 {
 	size_t cmdlen;
 	int ret, opt, hsiz;
-	struct sigaction act;
 	char *prompt, *compcmd;
 
 	hsiz = 0;
@@ -142,17 +157,8 @@ main(int argc, char **argv)
 	if (atexit(cleanup))
 		err(EXIT_FAILURE, "atexit failed");
 
-	if (histfp) {
-		if (linenoiseHistoryLoad(histfp) == -1)
-			err(EXIT_FAILURE, "couldn't load '%s'", histfp);
-		if (!linenoiseHistorySetMaxLen(hsiz ? hsiz : DEFHSIZ))
-			err(EXIT_FAILURE, "couldn't set history size");
-
-		memset(&act, '\0', sizeof(act));
-		act.sa_handler = sighandler;
-		if (sigaction(SIGINT, &act, NULL))
-			err(EXIT_FAILURE, "sigaction failed");
-	}
+	if (histfp)
+		confhist(histfp, hsiz);
 
 	if (compcmd) {
 		if (!(fdtemp = mkstemp(fntemp)))
