@@ -117,8 +117,9 @@ confhist(char *fp, int size)
 	if (!linenoiseHistorySetMaxLen(size ? size : DEFHSIZ))
 		err(EXIT_FAILURE, "couldn't set history size");
 
-	memset(&act, '\0', sizeof(act));
 	act.sa_handler = sighandler;
+	if (sigemptyset(&act.sa_mask) == -1)
+		err(EXIT_FAILURE, "sigemptyset failed");
 	if (sigaction(SIGINT, &act, NULL))
 		err(EXIT_FAILURE, "sigaction failed");
 }
