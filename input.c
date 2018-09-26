@@ -123,11 +123,35 @@ confhist(char *fp, int size)
 		err(EXIT_FAILURE, "sigaction failed");
 }
 
+static void
+confcomp(char *compcmd)
+{
+	int ret;
+	size_t cmdlen;
+
+	if (!(fdtemp = mkstemp(fntemp)))
+		err(EXIT_FAILURE, "mkstemp failed");
+	if (fchmod(fdtemp, 0600) == -1) /* not manadated by POSIX */
+		err(EXIT_FAILURE, "fchmod failed");
+
+	/* + 2 for the null byte and the pipe character. */
+	cmdlen = 2 + strlen(GREPCMD) + strlen(fntemp) + strlen(compcmd);
+	if (!(cmdbuf = malloc(cmdlen)))
+		err(EXIT_FAILURE, "malloc failed");
+
+	ret = snprintf(cmdbuf, cmdlen, "%s|" GREPCMD "%s", compcmd, fntemp);
+	if (ret < 0)
+		err(EXIT_FAILURE, "snprintf failed");
+	else if ((size_t)ret >= cmdlen)
+		errx(EXIT_FAILURE, "buffer for snprintf is too short");
+
+	linenoiseSetCompletionCallback(comp);
+}
+
 int
 main(int argc, char **argv)
 {
-	size_t cmdlen;
-	int ret, opt, hsiz;
+	int opt, hsiz;
 	char *prompt, *compcmd;
 
 	hsiz = 0;
@@ -159,26 +183,8 @@ main(int argc, char **argv)
 
 	if (histfp)
 		confhist(histfp, hsiz);
-
-	if (compcmd) {
-		if (!(fdtemp = mkstemp(fntemp)))
-			err(EXIT_FAILURE, "mkstemp failed");
-		if (fchmod(fdtemp, 0600) == -1) /* not manadated by POSIX */
-			err(EXIT_FAILURE, "fchmod failed");
-
-		/* + 2 for the null byte and the pipe character. */
-		cmdlen = 2 + strlen(GREPCMD) + strlen(fntemp) + strlen(compcmd);
-		if (!(cmdbuf = malloc(cmdlen)))
-			err(EXIT_FAILURE, "malloc failed");
-
-		ret = snprintf(cmdbuf, cmdlen, "%s|" GREPCMD "%s", compcmd, fntemp);
-		if (ret < 0)
-			err(EXIT_FAILURE, "snprintf failed");
-		else if ((size_t)ret >= cmdlen)
-			errx(EXIT_FAILURE, "buffer for snprintf is too short");
-
-		linenoiseSetCompletionCallback(comp);
-	}
+	if (compcmd)
+		confcomp(compcmd);
 
 	linenoiseSetEncodingFunctions(
 	    linenoiseUtf8PrevCharLen,
