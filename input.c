@@ -41,7 +41,8 @@ cleanup(void)
 		warnx("couldn't save history to '%s'", histfp);
 
 	if (fdtemp > 0) {
-		close(fdtemp);
+		if (close(fdtemp) == -1)
+			warn("close failed for '%s'", fntemp);
 		if (remove(fntemp) == -1)
 			warn("couldn't remove file '%s'", fntemp);
 	}
