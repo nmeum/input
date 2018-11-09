@@ -104,6 +104,8 @@ iloop(char *prompt)
 		puts(line);
 		fflush(stdout);
 
+		if (*line != '\0' && histfp)
+			linenoiseHistoryAdd(line);
 		free(line);
 	}
 }
