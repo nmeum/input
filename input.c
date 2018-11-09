@@ -113,7 +113,7 @@ confhist(char *fp, int size)
 {
 	struct sigaction act;
 
-	if (linenoiseHistoryLoad(fp) == -1)
+	if (linenoiseHistoryLoad(fp) == -1 && errno != ENOENT)
 		err(EXIT_FAILURE, "couldn't load '%s'", fp);
 	if (!linenoiseHistorySetMaxLen(size ? size : DEFHSIZ))
 		err(EXIT_FAILURE, "couldn't set history size");
