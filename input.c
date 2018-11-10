@@ -23,6 +23,7 @@ static char *cmdbuf;
 
 static int fdtemp = -1;
 static char fntemp[] = "/tmp/inputXXXXXX";
+static int signals[] = {SIGINT, SIGTERM, SIGQUIT, SIGHUP};
 
 static void
 usage(char *prog)
@@ -52,7 +53,9 @@ static void
 sighandler(int num)
 {
 	(void)num;
+
 	cleanup();
+	exit(EXIT_FAILURE);
 }
 
 static char *
@@ -113,6 +116,7 @@ iloop(char *prompt)
 static void
 confhist(char *fp, int size)
 {
+	size_t i;
 	struct sigaction act;
 
 	if (linenoiseHistoryLoad(fp) == -1 && errno != ENOENT)
@@ -123,8 +127,11 @@ confhist(char *fp, int size)
 	act.sa_handler = sighandler;
 	if (sigemptyset(&act.sa_mask) == -1)
 		err(EXIT_FAILURE, "sigemptyset failed");
-	if (sigaction(SIGINT, &act, NULL))
-		err(EXIT_FAILURE, "sigaction failed");
+
+	for (i = 0; i < (sizeof(signals) / sizeof(signals[0])); i++) {
+		if (sigaction(signals[i], &act, NULL))
+			err(EXIT_FAILURE, "sigaction failed");
+	}
 }
 
 static void
