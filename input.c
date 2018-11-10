@@ -16,7 +16,7 @@
 #include "utf8.h"
 
 #define GREPCMD "grep -F -f "
-#define DEFHSIZ 256
+#define DEFHSIZ 128
 
 static char *histfp;
 static char *cmdbuf;
