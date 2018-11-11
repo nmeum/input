@@ -124,6 +124,7 @@ confhist(char *fp, int size)
 	if (!linenoiseHistorySetMaxLen(size ? size : DEFHSIZ))
 		err(EXIT_FAILURE, "couldn't set history size");
 
+	act.sa_flags = 0;
 	act.sa_handler = sighandler;
 	if (sigemptyset(&act.sa_mask) == -1)
 		err(EXIT_FAILURE, "sigemptyset failed");
