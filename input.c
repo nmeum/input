@@ -58,6 +58,23 @@ sighandler(int num)
 	exit(EXIT_FAILURE);
 }
 
+static void
+sethandler(void)
+{
+	size_t i;
+	struct sigaction act;
+
+	act.sa_flags = 0;
+	act.sa_handler = sighandler;
+	if (sigemptyset(&act.sa_mask) == -1)
+		err(EXIT_FAILURE, "sigemptyset failed");
+
+	for (i = 0; i < (sizeof(signals) / sizeof(signals[0])); i++) {
+		if (sigaction(signals[i], &act, NULL))
+			err(EXIT_FAILURE, "sigaction failed");
+	}
+}
+
 static char *
 safegrep(const char *pattern)
 {
@@ -116,23 +133,14 @@ iloop(char *prompt)
 static void
 confhist(char *fp, int size)
 {
-	size_t i;
-	struct sigaction act;
+	int hsiz;
+
+	hsiz = size ? size : DEFHSIZ;
+	if (!linenoiseHistorySetMaxLen(hsiz))
+		err(EXIT_FAILURE, "couldn't set history size");
 
 	if (linenoiseHistoryLoad(fp) == -1 && errno != ENOENT)
 		err(EXIT_FAILURE, "couldn't load '%s'", fp);
-	if (!linenoiseHistorySetMaxLen(size ? size : DEFHSIZ))
-		err(EXIT_FAILURE, "couldn't set history size");
-
-	act.sa_flags = 0;
-	act.sa_handler = sighandler;
-	if (sigemptyset(&act.sa_mask) == -1)
-		err(EXIT_FAILURE, "sigemptyset failed");
-
-	for (i = 0; i < (sizeof(signals) / sizeof(signals[0])); i++) {
-		if (sigaction(signals[i], &act, NULL))
-			err(EXIT_FAILURE, "sigaction failed");
-	}
 }
 
 static void
@@ -190,6 +198,7 @@ main(int argc, char **argv)
 		}
 	}
 
+	sethandler();
 	if (atexit(cleanup))
 		err(EXIT_FAILURE, "atexit failed");
 
