@@ -91,16 +91,18 @@ static void
 comp(const char *buf, linenoiseCompletions *lc)
 {
 	FILE *pipe;
+	ssize_t read;
 	size_t buflen;
 	char *p, *cmd;
-	static char line[LINE_MAX + 1];
+	static char *line;
+	static size_t llen;
 
 	cmd = safegrep(buf);
 	if (!(pipe = popen(cmd, "r")))
 		err(EXIT_FAILURE, "popen failed");
-
 	buflen = strlen(buf);
-	while (fgets(line, sizeof(line), pipe)) {
+
+	while ((read = getline(&line, &llen, pipe)) != -1) {
 		if (strncmp(buf, line, buflen))
 			continue;
 		if ((p = strchr(line, '\n')))
