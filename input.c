@@ -21,6 +21,7 @@
 static char *histfp;
 static char *cmdbuf;
 
+static int wflag = 0;
 static int fdtemp = -1;
 static char fntemp[] = "/tmp/inputXXXXXX";
 static int signals[] = {SIGINT, SIGTERM, SIGQUIT, SIGHUP};
@@ -28,7 +29,7 @@ static int signals[] = {SIGINT, SIGTERM, SIGQUIT, SIGHUP};
 static void
 usage(char *prog)
 {
-	char *usage = "[-c COMMAND] [-p PROMPT] "
+	char *usage = "[-w] [-c COMMAND] [-p PROMPT] "
 	              "[-h HISTORY] [-s HISTSIZE]";
 
 	fprintf(stderr, "USAGE: %s %s\n", basename(prog), usage);
@@ -76,37 +77,64 @@ sethandler(void)
 }
 
 static char *
-safegrep(const char *pattern)
+safegrep(const char *pattern, size_t len)
 {
 	if (ftruncate(fdtemp, 0) == -1)
 		err(EXIT_FAILURE, "ftruncate failed");
-	if (write(fdtemp, pattern, strlen(pattern)) == -1 ||
+	if (write(fdtemp, pattern, len) == -1 ||
 	    write(fdtemp, "\n", 1) == -1)
 		err(EXIT_FAILURE, "write failed");
 
 	return cmdbuf;
 }
 
+static const char *
+lword(const char *buf)
+{
+	const char *ws;
+
+	if ((ws = strrchr(buf, ' ')))
+		ws++;
+	else
+		ws = buf;
+
+	return ws;
+}
+
 static void
 comp(const char *buf, linenoiseCompletions *lc)
 {
 	FILE *pipe;
-	ssize_t read;
-	size_t buflen;
 	char *p, *cmd;
+	const char *input;
+	size_t inlen, nlen, irem;
 	static char *line;
 	static size_t llen;
 
-	cmd = safegrep(buf);
+	input = (wflag) ? lword(buf) : buf;
+	inlen = strlen(input);
+
+	cmd = safegrep(input, inlen);
 	if (!(pipe = popen(cmd, "r")))
 		err(EXIT_FAILURE, "popen failed");
-	buflen = strlen(buf);
 
-	while ((read = getline(&line, &llen, pipe)) != -1) {
-		if (strncmp(buf, line, buflen))
+	while (getline(&line, &llen, pipe) != -1) {
+		if (strncmp(input, line, inlen))
 			continue;
 		if ((p = strchr(line, '\n')))
 			*p = '\0';
+
+		if (wflag) { /* expand completion */
+			irem = (size_t)(input - buf);
+			nlen = irem + strlen(line) + 1;
+
+			if (llen < nlen && !(line = realloc(line, nlen)))
+				err(EXIT_FAILURE, "realloc failed");
+
+			memmove(&line[irem], line, strlen(line));
+			strncpy(line, buf, irem);
+			line[nlen - 1] = '\0';
+		}
 		linenoiseAddCompletion(lc, line);
 	}
 	if (ferror(pipe))
@@ -180,8 +208,11 @@ main(int argc, char **argv)
 	prompt = "> ";
 	compcmd = NULL;
 
-	while ((opt = getopt(argc, argv, "c:p:h:s:")) != -1) {
+	while ((opt = getopt(argc, argv, "wc:p:h:s:")) != -1) {
 		switch (opt) {
+		case 'w':
+			wflag = 1;
+			break;
 		case 'c':
 			compcmd = optarg;
 			break;
