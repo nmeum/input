@@ -128,8 +128,11 @@ comp(const char *buf, linenoiseCompletions *lc)
 			irem = (size_t)(input - buf);
 			nlen = irem + strlen(line) + 1;
 
-			if (llen < nlen && !(line = realloc(line, nlen)))
-				err(EXIT_FAILURE, "realloc failed");
+			if (llen < nlen) {
+				if (!(line = realloc(line, nlen)))
+					err(EXIT_FAILURE, "realloc failed");
+				llen = nlen;
+			}
 
 			memmove(&line[irem], line, strlen(line));
 			strncpy(line, buf, irem);
