@@ -158,8 +158,11 @@ iloop(void)
 		printf("%s", line);
 		fflush(stdout);
 
-		if (*line != '\0' && hist)
-			history(hist, &ev, H_ADD, line);
+		if (!hist || *line == '\0')
+			continue;
+
+		if (history(hist, &ev, H_ENTER, line) == -1)
+			warnx("couldn't add input to history");
 	}
 
 	if (num == -1)
