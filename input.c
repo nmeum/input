@@ -251,6 +251,7 @@ main(int argc, char **argv)
 	setlocale(LC_CTYPE, "");
 	if (!(el = el_init(*argv, stdin, fout(), stderr)))
 		errx(EXIT_FAILURE, "el_init failed");
+	el_set(el, EL_EDITOR, "emacs");
 
 	sethandler();
 	if (atexit(cleanup))
