@@ -1,8 +1,10 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <histedit.h>
 #include <libgen.h>
 #include <limits.h>
+#include <locale.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,19 +14,24 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "linenoise.h"
-#include "utf8.h"
+#include "fns.h"
 
 #define GREPCMD "grep -F -f "
+#define TTYDEVP "/dev/tty"
 #define DEFHSIZ 128
 
-static char *histfp;
 static char *cmdbuf;
+static char *histfp;
+static char *prompt;
 
 static int wflag = 0;
 static int fdtemp = -1;
 static char fntemp[] = "/tmp/inputXXXXXX";
 static int signals[] = {SIGINT, SIGTERM, SIGQUIT, SIGHUP};
+
+static EditLine *el;
+static History *hist;
+static HistEvent ev;
 
 static void
 usage(char *prog)
@@ -39,8 +46,17 @@ usage(char *prog)
 static void
 cleanup(void)
 {
-	if (histfp && linenoiseHistorySave(histfp) == -1)
-		warnx("couldn't save history to '%s'", histfp);
+	if (!el)
+		return;
+
+	el_end(el);
+	el = NULL;
+
+	if (hist) {
+		if (history(hist, &ev, H_SAVE, histfp) == -1)
+			warnx("couldn't save history to '%s'", histfp);
+		history_end(hist);
+	}
 
 	if (fdtemp > 0) {
 		if (close(fdtemp) == -1)
@@ -76,6 +92,20 @@ sethandler(void)
 	}
 }
 
+static FILE *
+fout(void)
+{
+	FILE *out;
+
+	out = stdout;
+	if (isatty(fileno(out)))
+		return out;
+
+	if (!(out = fopen(TTYDEVP, "w")))
+		err(EXIT_FAILURE, "fopen failed");
+	return out;
+}
+
 static char *
 safegrep(const char *pattern, size_t len)
 {
@@ -91,31 +121,13 @@ safegrep(const char *pattern, size_t len)
 	return cmdbuf;
 }
 
-static const char *
-lword(const char *buf)
-{
-	const char *ws;
-
-	if ((ws = strrchr(buf, ' ')))
-		ws++;
-	else
-		ws = buf;
-
-	return ws;
-}
-
 static void
-comp(const char *buf, linenoiseCompletions *lc)
+comp(const char *input, size_t inlen)
 {
 	FILE *pipe;
 	char *p, *cmd;
-	const char *input;
-	size_t inlen, nlen, irem;
 	static char *line;
 	static size_t llen;
-
-	input = (wflag) ? lword(buf) : buf;
-	inlen = strlen(input);
 
 	cmd = safegrep(input, inlen);
 	if (!(pipe = popen(cmd, "r")))
@@ -126,22 +138,7 @@ comp(const char *buf, linenoiseCompletions *lc)
 			continue;
 		if ((p = strchr(line, '\n')))
 			*p = '\0';
-
-		if (wflag) { /* expand completion */
-			irem = (size_t)(input - buf);
-			nlen = irem + strlen(line) + 1;
-
-			if (llen < nlen) {
-				if (!(line = realloc(line, nlen)))
-					err(EXIT_FAILURE, "realloc failed");
-				llen = nlen;
-			}
-
-			memmove(&line[irem], line, strlen(line));
-			strncpy(line, buf, irem);
-			line[nlen - 1] = '\0';
-		}
-		linenoiseAddCompletion(lc, line);
+		addcomp(line);
 	}
 	if (ferror(pipe))
 		errx(EXIT_FAILURE, "ferror failed");
@@ -151,19 +148,22 @@ comp(const char *buf, linenoiseCompletions *lc)
 }
 
 static void
-iloop(char *prompt)
+iloop(void)
 {
-	char *line;
+	int num;
+	const char *line;
 
-	while ((line = linenoise(prompt)) != NULL) {
+	while ((line = el_gets(el, &num)) && num >= 0) {
 		/* We output empty lines intentionally. */
-		puts(line);
+		printf("%s", line);
 		fflush(stdout);
 
-		if (*line != '\0' && histfp)
-			linenoiseHistoryAdd(line);
-		free(line);
+		if (*line != '\0' && hist)
+			history(hist, &ev, H_ADD, line);
 	}
+
+	if (num == -1)
+		err(EXIT_FAILURE, "el_gets failed");
 }
 
 static void
@@ -171,12 +171,14 @@ confhist(char *fp, int size)
 {
 	int hsiz;
 
-	hsiz = size ? size : DEFHSIZ;
-	if (!linenoiseHistorySetMaxLen(hsiz))
-		err(EXIT_FAILURE, "couldn't set history size");
+	hist = history_init();
 
-	if (linenoiseHistoryLoad(fp) == -1 && errno != ENOENT)
-		err(EXIT_FAILURE, "couldn't load '%s'", fp);
+	hsiz = size ? size : DEFHSIZ;
+	if (history(hist, &ev, H_SETSIZE, hsiz) == -1)
+		errx(EXIT_FAILURE, "couldn't set history size");
+
+	if (history(hist, &ev, H_LOAD, fp) == -1)
+		errx(EXIT_FAILURE, "couldn't load '%s'", fp);
 }
 
 static void
@@ -201,14 +203,23 @@ confcomp(char *compcmd)
 	else if ((size_t)ret >= cmdlen)
 		errx(EXIT_FAILURE, "buffer for snprintf is too short");
 
-	linenoiseSetCompletionCallback(comp);
+	initcomp(comp, wflag);
+	el_set(el, EL_ADDFN, "complete", "Complete input", complete);
+	el_set(el, EL_BIND, "^I", "complete", NULL);
+}
+
+static char *
+promptfn(EditLine *e)
+{
+	(void)e;
+	return prompt;
 }
 
 int
 main(int argc, char **argv)
 {
 	int opt, hsiz;
-	char *prompt, *compcmd;
+	char *compcmd;
 
 	hsiz = 0;
 	prompt = "> ";
@@ -229,13 +240,17 @@ main(int argc, char **argv)
 			histfp = optarg;
 			break;
 		case 's':
-			if (!(hsiz = (int)strtol(optarg, (char **)NULL, 10)))
+			if (!(hsiz = strtol(optarg, (char **)NULL, 10)))
 				err(EXIT_FAILURE, "strtol failed");
 			break;
 		default:
 			usage(*argv);
 		}
 	}
+
+	setlocale(LC_CTYPE, "");
+	if (!(el = el_init(*argv, stdin, fout(), stderr)))
+		errx(EXIT_FAILURE, "el_init failed");
 
 	sethandler();
 	if (atexit(cleanup))
@@ -246,11 +261,10 @@ main(int argc, char **argv)
 	if (compcmd)
 		confcomp(compcmd);
 
-	linenoiseSetEncodingFunctions(
-	    linenoiseUtf8PrevCharLen,
-	    linenoiseUtf8NextCharLen,
-	    linenoiseUtf8ReadCode);
+	el_set(el, EL_PROMPT, promptfn);
+	el_set(el, EL_SIGNAL, 1);
+	el_source(el, NULL); /* source user defaults */
 
-	iloop(prompt);
+	iloop();
 	return EXIT_SUCCESS;
 }
