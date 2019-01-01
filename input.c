@@ -177,7 +177,7 @@ confhist(char *fp, int size)
 	if (history(hist, &ev, H_SETSIZE, hsiz) == -1)
 		errx(EXIT_FAILURE, "couldn't set history size");
 
-	if (history(hist, &ev, H_LOAD, fp) == -1)
+	if (!access(fp, F_OK) && history(hist, &ev, H_LOAD, fp) == -1)
 		errx(EXIT_FAILURE, "couldn't load '%s'", fp);
 }
 
