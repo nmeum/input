@@ -251,7 +251,11 @@ main(int argc, char **argv)
 	setlocale(LC_CTYPE, "");
 	if (!(el = el_init(*argv, stdin, fout(), stderr)))
 		errx(EXIT_FAILURE, "el_init failed");
+
 	el_set(el, EL_EDITOR, "emacs");
+	el_set(el, EL_PROMPT, promptfn);
+	el_set(el, EL_SIGNAL, 1);
+	el_source(el, NULL); /* source user defaults */
 
 	sethandler();
 	if (atexit(cleanup))
@@ -261,10 +265,6 @@ main(int argc, char **argv)
 		confhist(histfp, hsiz);
 	if (compcmd)
 		confcomp(compcmd);
-
-	el_set(el, EL_PROMPT, promptfn);
-	el_set(el, EL_SIGNAL, 1);
-	el_source(el, NULL); /* source user defaults */
 
 	iloop();
 	return EXIT_SUCCESS;
