@@ -175,10 +175,9 @@ next:
 	inlen = getin(&input, el_wline(el));
 
 	free(linput);
-	if (!(linput = malloc((inlen + 1) * sizeof(wchar_t))))
-		err(EXIT_FAILURE, "malloc failed");
+	if (!(linput = calloc(inlen + 1, sizeof(wchar_t))))
+		err(EXIT_FAILURE, "calloc failed");
 	memcpy(linput, input, inlen * sizeof(wchar_t));
-	linput[inlen] = '\0';
 	lcomp = c;
 
 	return CC_REFRESH;
