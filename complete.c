@@ -27,6 +27,7 @@ static comp *comps;
 static size_t
 getin(const wchar_t **dest, const LineInfoW *linfo)
 {
+	ssize_t n;
 	size_t len;
 	const wchar_t *ws;
 
@@ -36,10 +37,10 @@ getin(const wchar_t **dest, const LineInfoW *linfo)
 		return len;
 	}
 
-	if ((ws = memrchr(linfo->buffer, ' ', len * sizeof(wchar_t))))
-		ws++;
-	else
-		ws = linfo->buffer;
+	n = cursoridx(linfo);
+	while (n-- && !iswspace(linfo->buffer[n]))
+		;
+	ws = (n >= 0) ? &linfo->buffer[++n] : linfo->buffer;
 
 	*dest = ws;
 	return linfo->lastchar - ws;
