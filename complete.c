@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <wchar.h>
 
 #include <sys/types.h>
 
@@ -12,7 +13,7 @@
 typedef struct _comp comp;
 
 struct _comp {
-	char *val;
+	wchar_t *val;
 	comp *nxt;
 };
 
@@ -24,10 +25,10 @@ static comp *comps;
 	((LINEINFO->cursor) - (LINEINFO)->buffer)
 
 static size_t
-getin(const char **dest, const LineInfo *linfo)
+getin(const wchar_t **dest, const LineInfoW *linfo)
 {
 	size_t len;
-	const char* ws;
+	const wchar_t *ws;
 
 	len = linfo->lastchar - linfo->buffer;
 	if (!wcomp) {
@@ -35,7 +36,7 @@ getin(const char **dest, const LineInfo *linfo)
 		return len;
 	}
 
-	if ((ws = memrchr(linfo->buffer, ' ', len)))
+	if ((ws = memrchr(linfo->buffer, ' ', len * sizeof(wchar_t))))
 		ws++;
 	else
 		ws = linfo->buffer;
@@ -74,15 +75,39 @@ freecomps(void)
 	comps = NULL;
 }
 
+static void
+callcomp(const wchar_t *input, size_t len)
+{
+	char *mbs;
+	size_t mbslen;
+
+	if ((mbslen = wcsnrtombs(NULL, &input, len, 0, NULL)) == (size_t)-1)
+		err(EXIT_FAILURE, "wcsnrtombs failed");
+
+	if (!(mbs = calloc(mbslen + 1, sizeof(wchar_t))))
+		err(EXIT_FAILURE, "calloc failed");
+	if (wcsnrtombs(mbs, &input, len, mbslen + 1, NULL) == (size_t)-1)
+		err(EXIT_FAILURE, "wcsnrtombs failed");
+
+	cfn(mbs, mbslen);
+}
+
 void
 addcomp(char *str)
 {
 	comp *c;
+	size_t mbslen;
+
+	if ((mbslen = mbstowcs(NULL, str, 0)) == (size_t)-1)
+		err(EXIT_FAILURE, "mbstowcs failed");
 
 	if (!(c = malloc(sizeof(*c))))
 		err(EXIT_FAILURE, "malloc failed");
-	if (!(c->val = strdup(str)))
-		err(EXIT_FAILURE, "strdup failed");
+	if (!(c->val = calloc(mbslen + 1, sizeof(wchar_t))))
+		err(EXIT_FAILURE, "calloc failed");
+
+	if (mbstowcs(c->val, str, mbslen + 1) == (size_t)-1)
+		err(EXIT_FAILURE, "mbstowcs failed");
 
 	if (!comps) {
 		comps = c;
@@ -104,58 +129,55 @@ unsigned char
 complete(EditLine *el, int ch)
 {
 	comp *c;
-	size_t inlen, cidx, cccur;
-	const LineInfoW *winfo;
-	const LineInfo *linfo;
-	const char *input;
-	static char *linput;
+	size_t inlen, cidx, ccur;
+	const LineInfoW *linfo;
+	const wchar_t *input;
+	static wchar_t *linput;
 	static comp *lcomp;
-	static size_t bbcur, bccur;
+	static size_t bcur;
 
 	(void)ch;
 
-	winfo = el_wline(el);
-	linfo = el_line(el);
+	linfo = el_wline(el);
 	inlen = getin(&input, linfo);
 
-	if (!linput || inlen != strlen(linput) || strncmp(input, linput, inlen)) {
+	if (!linput || inlen != wcslen(linput) || wcsncmp(input, linput, inlen)) {
 		freecomps();
 		lcomp = NULL;
 
-		cfn(input, inlen);
+		callcomp(input, inlen);
 		if (!comps)
 			return CC_ERROR;
 		c = comps;
 
-		bbcur = cursoridx(linfo); /* base byte cursor */
-		bccur = cursoridx(winfo); /* base char cursor */
+		bcur = cursoridx(linfo); /* base char cursor */
 	} else {
-		cccur = cursoridx(winfo); /* current char cursor */
-		assert(cccur >= bccur);
-		el_deletestr(el, cccur - bccur);
+		ccur = cursoridx(linfo); /* current char cursor */
+		assert(ccur >= bcur);
+		el_deletestr(el, ccur - bcur);
 
 		if (!(c = nxtcomp(lcomp)))
 			return CC_REFRESH; /* deletestr changed line */
 	}
 
-	cidx = bbcur;
+	cidx = bcur;
 	if (wcomp) {
 		assert(input >= linfo->buffer);
 		cidx -= input - linfo->buffer;
 	}
 
-	if (cidx >= strlen(c->val))
+	if (cidx >= wcslen(c->val))
 		goto next;
-	if (el_insertstr(el, &c->val[cidx]) == -1)
-		errx(EXIT_FAILURE, "el_insertstr failed");
+	if (el_winsertstr(el, &c->val[cidx]) == -1)
+		errx(EXIT_FAILURE, "el_winsertstr failed");
 
 next:
-	inlen = getin(&input, el_line(el));
+	inlen = getin(&input, el_wline(el));
 
 	free(linput);
-	if (!(linput = malloc(inlen + 1)))
+	if (!(linput = malloc((inlen + 1) * sizeof(wchar_t))))
 		err(EXIT_FAILURE, "malloc failed");
-	memcpy(linput, input, inlen);
+	memcpy(linput, input, inlen * sizeof(wchar_t));
 	linput[inlen] = '\0';
 	lcomp = c;
 
