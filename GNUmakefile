@@ -20,6 +20,9 @@ $(NAME): $(OBJECTS)
 %.o: %.c $(HEADERS)
 	$(CC) $(CPPFLAGS) $(CFLAGS) -c $<
 
+check: input
+	cd tests/ && ./run_tests.sh
+
 format: $(SOURCES) $(HEADERS)
 	clang-format -style=file -i $^
 
@@ -28,4 +31,4 @@ install: $(NAME) $(NAME).1 README.md
 	install -Dm644 $(NAME).1 "$(DESTDIR)$(MANDIR)/man1/$(NAME).1"
 	install -Dm644 README.md "$(DESTDIR)$(DOCDIR)/README.md"
 
-.PHONY: format install
+.PHONY: check format install

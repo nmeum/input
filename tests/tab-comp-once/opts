@@ -1,0 +1,1 @@
+-c '/bin/sh -c "touch /tmp/input-test/comp-once ; ln /tmp/input-test/comp-once /tmp/input-test/comp-once-$(awk "BEGIN { srand(); print(rand()) }") ; printf bar\\\\nbaz\\\\n"'

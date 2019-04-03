@@ -43,6 +43,15 @@ The program can be installed using:
 	$ make
 	$ make install
 
+## Testing
+
+A test suite using [tmux][tmux homepage] is also available. The test
+suite relies on heuristics to determine whether the process under test
+is ready to receive input and might thus be a bit racy. It can be
+invoked using:
+
+	$ make check
+
 ## License
 
 This program is free software: you can redistribute it and/or modify it
@@ -63,3 +72,4 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 [GNU readline]: https://tiswww.case.edu/php/chet/readline/rltop.html
 [GNU make]: https://www.gnu.org/software/make/
 [NetBSD editline]: https://www.thrysoee.dk/editline/
+[tmux homepage]: https://tmux.github.io

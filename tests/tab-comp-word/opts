@@ -1,0 +1,1 @@
+-w -c "printf 'foo\nbar\n'"
