@@ -158,7 +158,7 @@ iloop(void)
 		printf("%s", line);
 		fflush(stdout);
 
-		if (!hist || *line == '\0')
+		if (!hist || !strcmp(line, "\n"))
 			continue;
 
 		if (history(hist, &ev, H_ENTER, line) == -1)
