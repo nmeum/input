@@ -81,6 +81,9 @@ safegrep(const char *pattern, size_t len)
 {
 	if (ftruncate(fdtemp, 0) == -1)
 		err(EXIT_FAILURE, "ftruncate failed");
+	if (lseek(fdtemp, SEEK_SET, 0) == -1)
+		err(EXIT_FAILURE, "lseek failed");
+
 	if (write(fdtemp, pattern, len) == -1 ||
 	    write(fdtemp, "\n", 1) == -1)
 		err(EXIT_FAILURE, "write failed");
