@@ -173,16 +173,29 @@ static void
 confhist(char *fp, int size)
 {
 	int hsiz;
+	char *errmsg;
 
 	hist = history_init();
 
 	hsiz = size ? size : DEFHSIZ;
-	if (history(hist, &ev, H_SETSIZE, hsiz) == -1)
-		errx(EXIT_FAILURE, "couldn't set history size");
+	if (history(hist, &ev, H_SETSIZE, hsiz) == -1) {
+		errmsg = "couldn't set history size";
+		goto err;
+	}
 
 	el_set(el, EL_HIST, history, hist);
-	if (!access(fp, F_OK) && history(hist, &ev, H_LOAD, fp) == -1)
-		errx(EXIT_FAILURE, "couldn't load '%s'", fp);
+	if (!access(fp, F_OK) && history(hist, &ev, H_LOAD, fp) == -1) {
+		errmsg = "couldn't load history file";
+		goto err;
+	}
+
+	return;
+err:
+	/* don't overwrite history file in cleanup() */
+	history_end(hist);
+	hist = NULL;
+
+	errx(EXIT_FAILURE, "%s", errmsg);
 }
 
 static void
