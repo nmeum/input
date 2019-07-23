@@ -172,11 +172,15 @@ confhist(char *fp, int size)
 	int hsiz;
 
 	hsiz = size ? size : DEFHSIZ;
-	if (!linenoiseHistorySetMaxLen(hsiz))
+	if (!linenoiseHistorySetMaxLen(hsiz)) {
+		histfp = NULL;
 		err(EXIT_FAILURE, "couldn't set history size");
+	}
 
-	if (linenoiseHistoryLoad(fp) == -1 && errno != ENOENT)
+	if (linenoiseHistoryLoad(fp) == -1 && errno != ENOENT) {
+		histfp = NULL;
 		err(EXIT_FAILURE, "couldn't load '%s'", fp);
+	}
 }
 
 static void
