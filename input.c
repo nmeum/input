@@ -67,6 +67,23 @@ cleanup(void)
 }
 
 static void
+onexit(void)
+{
+	sigset_t blockset;
+
+	/* cleanup is called atexit(3) and from a signal handler, block
+	 * all signals here before invoking cleanup to ensure we are not
+	 * interrupted by the signal handler during cleanup. */
+
+	if (sigfillset(&blockset) == -1)
+		err(EXIT_FAILURE, "sigemptyset failed");
+	if (sigprocmask(SIG_BLOCK, &blockset, NULL))
+		err(EXIT_FAILURE, "sigprocmask failed");
+
+	cleanup();
+}
+
+static void
 sighandler(int num)
 {
 	(void)num;
@@ -275,7 +292,7 @@ main(int argc, char **argv)
 	el_source(el, NULL); /* source user defaults */
 
 	sethandler();
-	if (atexit(cleanup))
+	if (atexit(onexit))
 		err(EXIT_FAILURE, "atexit failed");
 
 	if (histfp)
