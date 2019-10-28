@@ -36,12 +36,24 @@ The following software is required:
 
 * A C99 compiler
 * [GNU make][GNU make] (sorry!)
-* BSD editline, e.g. the [portable NetBSD version][NetBSD editline]
+* BSD editline / libedit (see below)
 
 The program can be installed using:
 
 	$ make
 	$ make install
+
+### Notes on libedit
+
+With libedit originating from the BSD project, different versions of
+that library are shipped by different BSD operating systems. I
+personally use the [portable NetBSD version][NetBSD editline]. libedit
+versions from other BSD operating systems may have some shortcomings.
+For instance, OpenBSD [strips non-ASCII characters][openbsd nowchar] in
+the `el_gets` function of their libedit version causing `input` to not
+support wide characters. While `input` should compile with different
+libedit versions, the test suite is only guaranteed to pass with the
+NetBSD version.
 
 ## Testing
 
@@ -73,3 +85,4 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 [GNU make]: https://www.gnu.org/software/make/
 [NetBSD editline]: https://www.thrysoee.dk/editline/
 [tmux homepage]: https://tmux.github.io
+[openbsd nowchar]: https://github.com/openbsd/src/blob/ddc81437857133802b1cf7d8d5bf0ff2198b602b/lib/libedit/eln.c#L77-L80
