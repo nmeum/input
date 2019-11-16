@@ -1,3 +1,0 @@
-#!/bin/sh
-
-exec test "$(ls -l /tmp/input-test/comp-once | awk '{ print $2 }')" -eq 1

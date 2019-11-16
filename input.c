@@ -1,7 +1,6 @@
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <histedit.h>
 #include <libgen.h>
 #include <limits.h>
 #include <locale.h>
@@ -11,10 +10,11 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <readline/history.h>
+#include <readline/readline.h>
+
 #include <sys/stat.h>
 #include <sys/types.h>
-
-#include "fns.h"
 
 #define GREPCMD "grep -F -f "
 #define TTYDEVP "/dev/tty"
@@ -29,10 +29,6 @@ static int fdtemp = -1;
 static char fntemp[] = "/tmp/inputXXXXXX";
 static int signals[] = {SIGINT, SIGTERM, SIGQUIT, SIGHUP};
 
-static EditLine *el;
-static History *hist;
-static HistEvent ev;
-
 static void
 usage(char *prog)
 {
@@ -46,16 +42,14 @@ usage(char *prog)
 static void
 cleanup(void)
 {
-	if (!el)
+	static short clean;
+
+	if (clean)
 		return;
 
-	el_end(el);
-	el = NULL;
-
-	if (hist) {
-		if (history(hist, &ev, H_SAVE, histfp) == -1)
-			warnx("couldn't save history to '%s'", histfp);
-		history_end(hist);
+	if (histfp) {
+		if (write_history(histfp))
+			warn("saving history to '%s' failed", histfp);
 	}
 
 	if (fdtemp > 0) {
@@ -64,6 +58,8 @@ cleanup(void)
 		if (remove(fntemp) == -1)
 			warn("couldn't remove file '%s'", fntemp);
 	}
+
+	clean = 1;
 }
 
 static void
@@ -138,81 +134,81 @@ safegrep(const char *pattern, size_t len)
 	return cmdbuf;
 }
 
-static void
-comp(const char *input, size_t inlen)
+static char *
+gencomp(const char *input, int state)
 {
-	FILE *pipe;
-	char *p, *cmd;
+	size_t inlen;
+	char *r, *p, *cmd;
+	static FILE *pipe;
 	static char *line;
 	static size_t llen;
 
-	cmd = safegrep(input, inlen);
-	if (!(pipe = popen(cmd, "r")))
-		err(EXIT_FAILURE, "popen failed");
+	inlen = strlen(input);
+
+	if (!state) {
+		cmd = safegrep(input, inlen);
+		if (!(pipe = popen(cmd, "r")))
+			err(EXIT_FAILURE, "popen failed");
+	}
 
 	while (getline(&line, &llen, pipe) != -1) {
 		if (strncmp(input, line, inlen))
 			continue;
 		if ((p = strchr(line, '\n')))
 			*p = '\0';
-		addcomp(line);
+
+		if (!(r = strdup(line)))
+			err(EXIT_FAILURE, "strdup failed");
+		return r;
 	}
 	if (ferror(pipe))
 		errx(EXIT_FAILURE, "ferror failed");
 
 	if (pclose(pipe) == -1)
 		errx(EXIT_FAILURE, "pclose failed");
+
+	return NULL;
+}
+
+static char **
+comp(const char *text, int start, int end)
+{
+	(void)text;
+	(void)start;
+	(void)end;
+
+	/* Prevent readline from performing file completions */
+	rl_attempted_completion_over = 1;
+
+	/* Don't append any character to completions */
+	rl_completion_append_character = '\0';
+
+	return rl_completion_matches(text, gencomp);
 }
 
 static void
 iloop(void)
 {
-	int num;
 	const char *line;
 
-	while ((line = el_gets(el, &num)) && num >= 0) {
+	while ((line = readline(prompt))) {
 		/* We output empty lines intentionally. */
-		printf("%s", line);
+		printf("%s\n", line);
 		fflush(stdout);
 
-		if (!hist || !strcmp(line, "\n"))
-			continue;
-
-		if (history(hist, &ev, H_ENTER, line) == -1)
-			warnx("couldn't add input to history");
+		if (histfp && *line != '\0')
+			add_history(line);
 	}
-
-	if (num == -1)
-		err(EXIT_FAILURE, "el_gets failed");
 }
 
 static void
 confhist(char *fp, int size)
 {
-	int hsiz;
-	char *errmsg;
+	using_history();
+	stifle_history(size ? size : DEFHSIZ);
 
-	hist = history_init();
-
-	hsiz = size ? size : DEFHSIZ;
-	if (history(hist, &ev, H_SETSIZE, hsiz) == -1) {
-		errmsg = "couldn't set history size";
-		goto err;
-	}
-
-	el_set(el, EL_HIST, history, hist);
-	if (!access(fp, F_OK) && history(hist, &ev, H_LOAD, fp) == -1) {
-		errmsg = "couldn't load history file";
-		goto err;
-	}
-
-	return;
-err:
-	/* don't overwrite history file in cleanup() */
-	history_end(hist);
-	hist = NULL;
-
-	errx(EXIT_FAILURE, "%s", errmsg);
+	if (!access(fp, F_OK) && read_history(fp))
+		err(EXIT_FAILURE, "read_history failed");
 }
 
 static void
@@ -237,16 +233,8 @@ confcomp(char *compcmd)
 	else if ((size_t)ret >= cmdlen)
 		errx(EXIT_FAILURE, "buffer for snprintf is too short");
 
-	initcomp(comp, wflag);
-	el_set(el, EL_ADDFN, "complete", "Complete input", complete);
-	el_set(el, EL_BIND, "^I", "complete", NULL);
-}
-
-static char *
-promptfn(EditLine *e)
-{
-	(void)e;
-	return prompt;
+	rl_basic_word_break_characters = (wflag) ? " " : "";
+	rl_attempted_completion_function = comp;
 }
 
 int
@@ -282,23 +270,17 @@ main(int argc, char **argv)
 		}
 	}
 
-	setlocale(LC_CTYPE, "");
-	if (!(el = el_init(*argv, stdin, fout(), stderr)))
-		errx(EXIT_FAILURE, "el_init failed");
-
-	el_set(el, EL_EDITOR, "emacs");
-	el_set(el, EL_PROMPT, promptfn);
-	el_set(el, EL_SIGNAL, 1);
-	el_source(el, NULL); /* source user defaults */
-
 	sethandler();
 	if (atexit(onexit))
 		err(EXIT_FAILURE, "atexit failed");
 
+	rl_outstream = fout();
 	if (histfp)
 		confhist(histfp, hsiz);
 	if (compcmd)
 		confcomp(compcmd);
+	else
+		rl_bind_key('\t', rl_insert); /* disable completion */
 
 	iloop();
 	return EXIT_SUCCESS;

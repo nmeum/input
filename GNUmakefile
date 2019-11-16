@@ -1,7 +1,4 @@
 NAME = input
-SOURCES = $(NAME).c complete.c
-HEADERS = fns.h
-OBJECTS = $(SOURCES:%.c=%.o)
 
 PREFIX ?= /usr/local
 BINDIR ?= $(PREFIX)/bin
@@ -14,17 +11,14 @@ CFLAGS += -Wpedantic -Wall -Wextra \
 	      -Wmissing-prototypes -Wpointer-arith \
 	      -Wstrict-prototypes -Wshadow -Wformat-nonliteral
 
-LDLIBS += -ledit -lncurses
+LDLIBS += -lreadline -lncurses
 
-$(NAME): $(OBJECTS)
-%.o: %.c $(HEADERS)
-	$(CC) $(CPPFLAGS) $(CFLAGS) -c $<
-
-check: input
+$(NAME): $(NAME).o
+check: $(NAME)
 	cd tests/ && ./run_tests.sh
 
-format: $(SOURCES) $(HEADERS)
-	clang-format -style=file -i $^
+format: $(SOURCES)
+	clang-format -style=file -i $(NAME).c
 
 install: $(NAME) $(NAME).1 README.md
 	install -Dm755 $(NAME) "$(DESTDIR)$(BINDIR)/$(NAME)"

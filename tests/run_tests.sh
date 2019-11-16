@@ -22,7 +22,7 @@ if [ ! -x "${INPUT}" ]; then
 fi
 
 # Don't pickup user configuration file
-INPUT="env EDITRC=/dev/null '${INPUT}'"
+INPUT="env INPUTRC=/dev/null '${INPUT}'"
 
 mkdir "${testdir}"
 trap "rm -rf '${testdir}' ; tmux kill-session -t '${session}' 2>/dev/null || true" INT EXIT
@@ -57,11 +57,6 @@ for test in *; do
 	if ! cmp -s "${outfile}" "${test}/output"; then
 		printf "FAIL: Output didn't match.\n\n"
 		diff -u "${outfile}" "${test}/output"
-		exit 1
-	fi
-
-	if [ -x "${test}/postcheck" ] && ! "${test}/postcheck"; then
-		printf "FAIL: postcheck failed\n"
 		exit 1
 	fi
 
