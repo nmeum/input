@@ -7,18 +7,13 @@ Prompt for input with readline-like key bindings.
 I needed a program to interactively read data from standard input in a
 shell script, preferably with readline-like key bindings. Back then I
 didn't know about [rlwrap][rlwrap repo] and implemented this from
-scratch by myself.
-
-Contrary to rlwrap I initially used [linenoise][linenoise repo] instead
-of [readline][GNU readline] as it seemed easier to use at the time.
-Unfortunately, linenoise has some shortcomings and isn't properly
-maintained at the moment. I therefore switched to BSD editline with
-version 0.8.0.
+scratch by myself. This implementation is a simpler than rlwrap and
+additionally supports custom completions (`-c` flag).
 
 ## Features
 
-* Support for readline-like key bindings using editline.
-* Support for tab completions using arbitrary shell commands.
+* Support for readline-like key bindings.
+* Support for tab completions using arbitrary commands.
 * Support for a persistent editing history.
 * Support for wide characters.
 
@@ -36,24 +31,12 @@ The following software is required:
 
 * A C99 compiler
 * [GNU make][GNU make] (sorry!)
-* BSD editline (see below)
+* [GNU readline][GNU readline] (or BSD editline)
 
 The program can be installed using:
 
 	$ make
 	$ make install
-
-### Notes on editline
-
-With editline originating from BSD, different versions of that library
-are shipped by different BSD operating systems. I personally use the
-[portable NetBSD version][NetBSD editline]. editline versions from other
-BSD operating systems may have some shortcomings. For instance, OpenBSD
-[strips non-ASCII characters][openbsd nowchar] in the `el_gets` function
-of their editline version causing `input` to not support wide
-characters. While `input` should compile with different editline
-versions, the test suite is only guaranteed to pass with the NetBSD
-version.
 
 ## Testing
 
@@ -80,9 +63,6 @@ You should have received a copy of the GNU General Public License along
 with this program. If not, see <http://www.gnu.org/licenses/>.
 
 [rlwrap repo]: https://github.com/hanslub42/rlwrap
-[linenoise repo]: https://github.com/antirez/linenoise
 [GNU readline]: https://tiswww.case.edu/php/chet/readline/rltop.html
 [GNU make]: https://www.gnu.org/software/make/
-[NetBSD editline]: https://www.thrysoee.dk/editline/
 [tmux homepage]: https://tmux.github.io
-[openbsd nowchar]: https://github.com/openbsd/src/blob/ddc81437857133802b1cf7d8d5bf0ff2198b602b/lib/libedit/eln.c#L77-L80
