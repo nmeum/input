@@ -18,7 +18,6 @@
 
 #define GREPCMD "grep -F -f "
 #define TTYDEVP "/dev/tty"
-#define DEFHSIZ 128
 
 static char *cmdbuf;
 static char *histfp;
@@ -205,7 +204,7 @@ static void
 confhist(char *fp, int size)
 {
 	using_history();
-	stifle_history(size ? size : DEFHSIZ);
+	stifle_history(size);
 
 	if (!access(fp, F_OK) && read_history(fp))
 		err(EXIT_FAILURE, "read_history failed");
@@ -243,7 +242,7 @@ main(int argc, char **argv)
 	int opt, hsiz;
 	char *compcmd;
 
-	hsiz = 0;
+	hsiz = 128;
 	prompt = "> ";
 	compcmd = NULL;
 
