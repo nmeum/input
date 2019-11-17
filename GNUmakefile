@@ -13,7 +13,7 @@ CFLAGS += -Wpedantic -Wall -Wextra \
 
 LDLIBS += -lreadline -lncurses
 
-$(NAME): $(NAME).o
+$(NAME): $(NAME).c
 check: $(NAME)
 	cd tests/ && ./run_tests.sh
 
