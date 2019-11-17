@@ -268,10 +268,6 @@ main(int argc, char **argv)
 		}
 	}
 
-	sethandler();
-	if (atexit(onexit))
-		err(EXIT_FAILURE, "atexit failed");
-
 	rl_outstream = fout();
 	if (histfp)
 		confhist(histfp, hsiz);
@@ -279,6 +275,11 @@ main(int argc, char **argv)
 		confcomp(compcmd, wflag);
 	else
 		rl_bind_key('\t', rl_insert); /* disable completion */
+
+	/* setup after initialization to prevent history truncation */
+	sethandler();
+	if (atexit(onexit))
+		err(EXIT_FAILURE, "atexit failed");
 
 	iloop(prompt);
 	return EXIT_SUCCESS;
