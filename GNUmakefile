@@ -11,7 +11,7 @@ CFLAGS += -Wpedantic -Wall -Wextra \
 	      -Wmissing-prototypes -Wpointer-arith \
 	      -Wstrict-prototypes -Wshadow -Wformat-nonliteral
 
-LDLIBS += -lreadline -lncurses
+LDLIBS = -lreadline -lncurses
 
 $(NAME): $(NAME).c
 check: $(NAME)
