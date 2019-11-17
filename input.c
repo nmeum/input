@@ -69,7 +69,7 @@ onexit(void)
 	 * interrupted by the signal handler during cleanup. */
 
 	if (sigfillset(&blockset) == -1)
-		err(EXIT_FAILURE, "sigemptyset failed");
+		err(EXIT_FAILURE, "sigfillset failed");
 	if (sigprocmask(SIG_BLOCK, &blockset, NULL))
 		err(EXIT_FAILURE, "sigprocmask failed");
 
