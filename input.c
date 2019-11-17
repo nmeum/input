@@ -42,7 +42,7 @@ cleanup(void)
 	static short clean;
 
 	if (clean)
-		return;
+		return; /* don't cleanup twice */
 
 	if (histfp) {
 		if (write_history(histfp))
