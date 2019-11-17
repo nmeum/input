@@ -1,0 +1,1 @@
+-c "printf 'foo\nfoobar\n'"

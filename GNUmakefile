@@ -7,27 +7,22 @@ DOCDIR ?= $(PREFIX)/share/doc/$(NAME)
 
 CFLAGS ?= -O0 -g -Werror
 CFLAGS += -std=c99 -D_POSIX_C_SOURCE=200809L
-CFLAGS += -Wpedantic -Wall -Wextra -Wconversion \
+CFLAGS += -Wpedantic -Wall -Wextra \
 	      -Wmissing-prototypes -Wpointer-arith \
 	      -Wstrict-prototypes -Wshadow -Wformat-nonliteral
 
-CPPFLAGS += -I./vendor/linenoise
+LDLIBS = -lreadline -lncurses
 
-input: $(NAME).o liblinenoise.a
-format: .clang-format $(NAME).c
+$(NAME): $(NAME).c
+check: $(NAME)
+	cd tests/ && ./run_tests.sh
+
+format: $(SOURCES)
 	clang-format -style=file -i $(NAME).c
-
-utf8.o: utf8.c utf8.h
-	$(CC) -c $< -o $@ $(CFLAGS) -w
-linenoise.o: linenoise.c linenoise.h
-	$(CC) -c $< -o $@ $(CFLAGS) -w
-liblinenoise.a: utf8.o linenoise.o
-	$(AR) rcs $@ $^
 
 install: $(NAME) $(NAME).1 README.md
 	install -Dm755 $(NAME) "$(DESTDIR)$(BINDIR)/$(NAME)"
 	install -Dm644 $(NAME).1 "$(DESTDIR)$(MANDIR)/man1/$(NAME).1"
 	install -Dm644 README.md "$(DESTDIR)$(DOCDIR)/README.md"
 
-VPATH += vendor/linenoise
-.PHONY: format install
+.PHONY: check format install

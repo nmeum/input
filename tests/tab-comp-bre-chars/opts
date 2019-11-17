@@ -1,0 +1,1 @@
+-c "printf '[0-9]foo\n\$bar\n'"

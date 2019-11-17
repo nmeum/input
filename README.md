@@ -7,16 +7,15 @@ Prompt for input with readline-like key bindings.
 I needed a program to interactively read data from standard input in a
 shell script, preferably with readline-like key bindings. Back then I
 didn't know about [rlwrap][rlwrap repo] and implemented this from
-scratch by myself. Contrary to rlwrap I used a [linenoise][linenoise
-repo] [fork][linenoise fork repo] instead of [readline][GNU readline]
-since it seemed easier to use at the time.
+scratch by myself. This implementation is a simpler than rlwrap and
+additionally supports custom completions (`-c` flag).
 
 ## Features
 
-* Support for readline-like key bindings using [linenoise][linenoise fork repo].
-* Support for tab completions using arbitrary shell commands.
+* Support for readline-like key bindings.
+* Support for tab completions using arbitrary commands.
 * Support for a persistent editing history.
-* Support for UTF-8.
+* Support for wide characters.
 
 ## Usage
 
@@ -28,18 +27,28 @@ use cases.
 
 ## Installation
 
-The linenoise code is included in the `vendor/` subdirectory as a
-git submodule since the fork is unlikely to be packaged by
-distributions. Additionally, the following software is required:
+The following software is required:
 
 * A C99 compiler
 * [GNU make][GNU make] (sorry!)
+* [GNU readline][GNU readline] (or BSD editline)
 
-In order to install the program the submodule needs to be initialized
-and cloned. Afterwards, the program can be installed using:
+The program can be installed using:
 
-	$ make
 	$ make install
+
+On BSD using editline instead of readline is possible by installing using:
+
+	$ gmake LDLIBS="-ledit -lncurses" install
+
+## Testing
+
+A test suite using [tmux][tmux homepage] is also available. The test
+suite relies on heuristics to determine whether the process under test
+is ready to receive input and might thus be a bit racy. It can be
+invoked using:
+
+	$ make check
 
 ## License
 
@@ -57,7 +66,6 @@ You should have received a copy of the GNU General Public License along
 with this program. If not, see <http://www.gnu.org/licenses/>.
 
 [rlwrap repo]: https://github.com/hanslub42/rlwrap
-[linenoise repo]: https://github.com/antirez/linenoise
-[linenoise fork repo]: https://github.com/rain-1/linenoise-mob
 [GNU readline]: https://tiswww.case.edu/php/chet/readline/rltop.html
 [GNU make]: https://www.gnu.org/software/make/
+[tmux homepage]: https://tmux.github.io
