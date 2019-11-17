@@ -35,8 +35,11 @@ The following software is required:
 
 The program can be installed using:
 
-	$ make
 	$ make install
+
+On BSD using editline instead of readline is possible by installing using:
+
+	$ gmake LDLIBS="-ledit -lncurses" install
 
 ## Testing
 
