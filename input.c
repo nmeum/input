@@ -21,9 +21,7 @@
 
 static char *cmdbuf;
 static char *histfp;
-static char *prompt;
 
-static int wflag = 0;
 static int fdtemp = -1;
 static char fntemp[] = "/tmp/inputXXXXXX";
 static int signals[] = {SIGINT, SIGTERM, SIGQUIT, SIGHUP};
@@ -186,7 +184,7 @@ comp(const char *text, int start, int end)
 }
 
 static void
-iloop(void)
+iloop(char *prompt)
 {
 	const char *line;
 
@@ -211,7 +209,7 @@ confhist(char *fp, int size)
 }
 
 static void
-confcomp(char *compcmd)
+confcomp(char *compcmd, int wflag)
 {
 	int ret;
 	size_t cmdlen;
@@ -239,9 +237,10 @@ confcomp(char *compcmd)
 int
 main(int argc, char **argv)
 {
-	int opt, hsiz;
-	char *compcmd;
+	int opt, hsiz, wflag;
+	char *prompt, *compcmd;
 
+	wflag = 0;
 	hsiz = 128;
 	prompt = "> ";
 	compcmd = NULL;
@@ -277,10 +276,10 @@ main(int argc, char **argv)
 	if (histfp)
 		confhist(histfp, hsiz);
 	if (compcmd)
-		confcomp(compcmd);
+		confcomp(compcmd, wflag);
 	else
 		rl_bind_key('\t', rl_insert); /* disable completion */
 
-	iloop();
+	iloop(prompt);
 	return EXIT_SUCCESS;
 }
