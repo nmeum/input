@@ -170,7 +170,6 @@ gencomp(const char *input, int state)
 static char **
 comp(const char *text, int start, int end)
 {
-	(void)text;
 	(void)start;
 	(void)end;
 
