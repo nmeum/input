@@ -10,6 +10,13 @@ didn't know about [rlwrap][rlwrap repo] and implemented this from
 scratch by myself. This implementation is a simpler than rlwrap and
 additionally supports custom completions (`-c` flag).
 
+## History
+
+The first versions of input (up until version 0.7.2) used a fork of the
+[linenoise][linenoise repo] editing library. Since linenoise wasn't
+properly maintained, later version switched to BSD editline and GNU
+readline.
+
 ## Features
 
 * Support for readline-like key bindings.
@@ -66,6 +73,7 @@ You should have received a copy of the GNU General Public License along
 with this program. If not, see <http://www.gnu.org/licenses/>.
 
 [rlwrap repo]: https://github.com/hanslub42/rlwrap
+[linenoise repo]: https://github.com/antirez/linenoise
 [GNU readline]: https://tiswww.case.edu/php/chet/readline/rltop.html
 [GNU make]: https://www.gnu.org/software/make/
 [tmux homepage]: https://tmux.github.io
