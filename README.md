@@ -10,12 +10,10 @@ didn't know about [rlwrap][rlwrap repo] and implemented this from
 scratch by myself. This implementation is a simpler than rlwrap and
 additionally supports custom completions (`-c` flag).
 
-## History
-
-The first versions of input (up until version 0.7.2) used a fork of the
-[linenoise][linenoise repo] editing library. Since linenoise wasn't
+Contrary to rlwrap, input initially used a fork of the
+[linenoise][linenoise repo] editing library.  Since linenoise wasn't
 properly maintained, later version switched to BSD editline and GNU
-readline.
+readline. The last version, released with linenoise support, is `0.7.2`.
 
 ## Features
 
