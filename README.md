@@ -22,7 +22,6 @@ readline.
 * Support for readline-like key bindings.
 * Support for tab completions using arbitrary commands.
 * Support for a persistent editing history.
-* Support for wide characters.
 
 ## Usage
 
