@@ -29,7 +29,7 @@ static int signals[] = {SIGINT, SIGTERM, SIGQUIT, SIGHUP};
 static void
 usage(char *prog)
 {
-	char *usage = "[-w] [-c COMMAND] [-p PROMPT] "
+	char *usage = "[-1] [-w] [-c COMMAND] [-p PROMPT] "
 	              "[-h HISTORY] [-s HISTSIZE]";
 
 	fprintf(stderr, "USAGE: %s %s\n", basename(prog), usage);
@@ -183,7 +183,7 @@ comp(const char *text, int start, int end)
 }
 
 static void
-iloop(char *prompt)
+iloop(int single, char *prompt)
 {
 	const char *line;
 
@@ -194,6 +194,8 @@ iloop(char *prompt)
 
 		if (histfp && *line != '\0')
 			add_history(line);
+		if (single)
+			break;
 	}
 }
 
@@ -236,16 +238,20 @@ confcomp(char *compcmd, int wflag)
 int
 main(int argc, char **argv)
 {
-	int opt, hsiz, wflag;
+	int opt, hsiz, wflag, single;
 	char *prompt, *compcmd;
 
+	single = 0;
 	wflag = 0;
 	hsiz = 128;
 	prompt = "> ";
 	compcmd = NULL;
 
-	while ((opt = getopt(argc, argv, "wc:p:h:s:")) != -1) {
+	while ((opt = getopt(argc, argv, "1wc:p:h:s:")) != -1) {
 		switch (opt) {
+		case '1':
+			single = 1;
+			break;
 		case 'w':
 			wflag = 1;
 			break;
@@ -280,6 +286,6 @@ main(int argc, char **argv)
 	if (atexit(onexit))
 		err(EXIT_FAILURE, "atexit failed");
 
-	iloop(prompt);
+	iloop(single, prompt);
 	return EXIT_SUCCESS;
 }
