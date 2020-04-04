@@ -46,13 +46,15 @@ for test in *; do
 		tmux send-keys -t "${session}" "${line}"
 	done < "${test}/input"
 
-	wait_for_sleep "${pid}"
-	tmux send-keys -t "${session}" C-d
+	if [ ! -e "${test}/exits" ]; then
+		wait_for_sleep "${pid}"
+		tmux send-keys -t "${session}" C-d
 
-	# Can't use wait(1) because proc was started in different env.
-	while tmux has-session -t "${session}" 2>/dev/null; do
-		true
-	done
+		# Can't use wait(1) because proc was started in different env.
+		while tmux has-session -t "${session}" 2>/dev/null; do
+			true
+		done
+	fi
 
 	if ! cmp -s "${outfile}" "${test}/output"; then
 		printf "FAIL: Output didn't match.\n\n"
