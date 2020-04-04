@@ -57,6 +57,16 @@ input | while read line; do
   echo "${input}" >> somefile.txt
 done
 .Ed
+.Pp
+To use
+.Nm
+as an alternative to
+.Xr read 1
+:
+.Bd -literal -offset indent
+name=$(input -1 -p "Enter your name: ")
+printf "Hello %s!\n" "$name"
+.Ed
 .Sh SEE ALSO
 .Xr rlwrap 1 ,
 .Xr readline 3
