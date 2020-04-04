@@ -7,10 +7,11 @@ Prompt for input with readline-like key bindings.
 I needed a program to interactively read data from standard input in a
 shell script, preferably with readline-like key bindings. Back then I
 didn't know about [rlwrap][rlwrap repo] and implemented this from
-scratch by myself. This implementation is a simpler than rlwrap and
-additionally supports custom completions (`-c` flag).
+scratch by myself. Contrary to rlwrap, this implementation focuses on
+shell scripting and not on providing a "readline wrapper" for existing
+applications.
 
-Contrary to rlwrap, input initially used a fork of the
+As an additional difference, input initially used a fork of the
 [linenoise][linenoise repo] editing library.  Since linenoise wasn't
 properly maintained, later version switched to BSD editline and GNU
 readline. The last version, released with linenoise support, is `0.7.2`.
@@ -20,14 +21,6 @@ readline. The last version, released with linenoise support, is `0.7.2`.
 * Support for readline-like key bindings.
 * Support for tab completions using arbitrary commands.
 * Support for a persistent editing history.
-
-## Usage
-
-Just as rlwrap this program can be used to provide readline-like key
-bindings for programs not linked against readline, e.g. `nc(1)`.
-Additionally, it can also be used as an "alternative" to `read(1)` in
-shell scripts. The provided man page contains usage examples for both
-use cases.
 
 ## Installation
 
