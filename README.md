@@ -9,12 +9,11 @@ shell script, preferably with readline-like key bindings. Back then I
 didn't know about [rlwrap][rlwrap repo] and implemented this from
 scratch by myself. Contrary to rlwrap, this implementation focuses on
 shell scripting and not on providing a "readline wrapper" for existing
-applications.
-
-As an additional difference, input initially used a fork of the
-[linenoise][linenoise repo] editing library.  Since linenoise wasn't
-properly maintained, later version switched to BSD editline and GNU
-readline. The last version, released with linenoise support, is `0.7.2`.
+applications. As an additional difference, input initially used a fork
+of the [linenoise][linenoise repo] editing library.  Since linenoise
+wasn't properly maintained, later version switched to BSD editline and
+GNU readline. The last version, released with linenoise support, is
+`0.7.2`.
 
 ## Features
 
