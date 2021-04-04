@@ -134,8 +134,9 @@ safegrep(const char *pattern, size_t len)
 static char *
 gencomp(const char *input, int state)
 {
+	ssize_t n;
 	size_t inlen;
-	char *r, *p, *cmd;
+	char *r, *cmd;
 	static FILE *pipe;
 	static char *line;
 	static size_t llen;
@@ -148,11 +149,11 @@ gencomp(const char *input, int state)
 			err(EXIT_FAILURE, "popen failed");
 	}
 
-	while (getline(&line, &llen, pipe) != -1) {
+	while ((n = getline(&line, &llen, pipe)) > 0) {
 		if (strncmp(input, line, inlen))
 			continue;
-		if ((p = strchr(line, '\n')))
-			*p = '\0';
+		if (line[n - 1] == '\n')
+			line[n - 1] = '\0';
 
 		if (!(r = strdup(line)))
 			err(EXIT_FAILURE, "strdup failed");
