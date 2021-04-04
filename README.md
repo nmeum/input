@@ -15,6 +15,12 @@ wasn't properly maintained, later version switched to BSD editline and
 GNU readline. The last version, released with linenoise support, is
 `0.7.2`.
 
+## Status
+
+I use this as part of my [IRC client][insomnia repo] on a daily basis.
+For this use case, it works entirely fine as is. However, further
+improvements could be made to generalize the completion setup.
+
 ## Features
 
 * Support for readline-like key bindings.
@@ -66,3 +72,4 @@ with this program. If not, see <http://www.gnu.org/licenses/>.
 [GNU readline]: https://tiswww.case.edu/php/chet/readline/rltop.html
 [GNU make]: https://www.gnu.org/software/make/
 [tmux homepage]: https://tmux.github.io
+[insomnia repo]: https://github.com/nmeum/insomnia
