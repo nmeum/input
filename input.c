@@ -180,6 +180,9 @@ comp(const char *text, int start, int end)
 	/* Don't append any character to completions */
 	rl_completion_append_character = '\0';
 
+	/* Don't sort completions */
+	rl_sort_completion_matches = 0;
+
 	return rl_completion_matches(text, gencomp);
 }
 
