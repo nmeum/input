@@ -18,6 +18,7 @@
 
 #define GREPCMD "grep -F -f "
 #define TTYDEVP "/dev/tty"
+#define LEN(X) (sizeof(X) / sizeof(X[0]))
 
 static char *cmdbuf;
 static char *histfp;
@@ -39,7 +40,7 @@ usage(char *prog)
 static void
 cleanup(void)
 {
-	static short clean;
+	static volatile sig_atomic_t clean;
 
 	if (clean)
 		return; /* don't cleanup twice */
@@ -96,7 +97,7 @@ sethandler(void)
 	if (sigemptyset(&act.sa_mask) == -1)
 		err(EXIT_FAILURE, "sigemptyset failed");
 
-	for (i = 0; i < (sizeof(signals) / sizeof(signals[0])); i++) {
+	for (i = 0; i < LEN(signals); i++) {
 		if (sigaction(signals[i], &act, NULL))
 			err(EXIT_FAILURE, "sigaction failed");
 	}
@@ -191,15 +192,31 @@ comp(const char *text, int start, int end)
 static void
 iloop(int single, char *prompt)
 {
+	size_t i;
 	const char *line;
+	sigset_t blockset;
+
+	/* Unfortunately, the history handling is not signal-safe.
+	 * Hence, we need to ensure that we don't run the cleanup
+	 * function (which writes the history) while we add to it. */
+	if (sigemptyset(&blockset) == -1)
+		err(EXIT_FAILURE, "sigemptyset failed");
+	for (i = 0; i < LEN(signals); i++)
+		sigaddset(&blockset, signals[i]);
 
 	while ((line = readline(prompt))) {
 		/* We output empty lines intentionally. */
 		printf("%s\n", line);
 		fflush(stdout);
 
-		if (histfp && *line != '\0')
+		if (histfp && *line != '\0') {
+			if (sigprocmask(SIG_BLOCK, &blockset, NULL))
+				err(EXIT_FAILURE, "signal blocking failed");
 			add_history(line);
+			if (sigprocmask(SIG_UNBLOCK, &blockset, NULL))
+				err(EXIT_FAILURE, "signal unblocking failed");
+		}
+
 		if (single)
 			break;
 	}
